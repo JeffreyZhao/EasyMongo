@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using MongoDB.Driver;
 using System.Linq.Expressions;
+using System.Collections;
 
 namespace EasyMongo
 {
@@ -69,6 +70,37 @@ namespace EasyMongo
         public void FillLessThanOrEqualPredicate(Document doc, object value)
         {
             this.FillInnerPredicate(doc, "$lte", value);
+        }
+
+        public void FillDocument(Document doc, object entity)
+        {
+            object docValue;
+
+            var property = this.Descriptor.Property;
+            var type = property.PropertyType;
+            var value = property.GetValue(entity, null);
+
+            if (typeof(IList).IsAssignableFrom(type))
+            {
+                docValue = ((IList)value).Cast<object>().ToArray();
+            }
+            else if (type.IsEnum)
+            {
+                if (type.IsDefined(typeof(FlagsAttribute), false))
+                {
+                    docValue = value.ToString().Split(new[] { ", " }, StringSplitOptions.None);
+                }
+                else
+                {
+                    docValue = value.ToString();
+                }
+            }
+            else
+            {
+                docValue = value;
+            }
+
+            doc.Append(this.Descriptor.Name, docValue);
         }
     }
 }

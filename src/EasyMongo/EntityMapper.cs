@@ -22,12 +22,12 @@ namespace EasyMongo
 
         public IEntityDescriptor Descriptor { get; private set; }
 
-        public IMongoCollection GetCollection(MongoDatabase database)
+        public IMongoCollection GetCollection(IMongoDatabase database)
         {
             return database[this.Descriptor.CollectionName];
         }
 
-        public Document GetPredicateDocument(Expression predicateExpr)
+        public Document GetPredicate(Expression predicateExpr)
         {
             var propPredicates = new PredicateCollector().Collect(predicateExpr);
 
@@ -39,6 +39,17 @@ namespace EasyMongo
             }
 
             return predicateDoc;
+        }
+
+        internal Document GetDocument(object entity)
+        {
+            var doc = new Document();
+            foreach (var mapper in this.m_properties.Values)
+            { 
+                mapper.FillDocument(doc, entity);
+            }
+
+            return doc;
         }
     }
 }

@@ -6,7 +6,7 @@ using MongoDB.Driver;
 
 namespace EasyMongo
 {
-    public class MongoDatabase : IDisposable
+    public class MongoDatabase : IMongoDatabase, IDisposable
     {
         public MongoDatabase(string host, int port, string dbName)
         {
@@ -18,10 +18,16 @@ namespace EasyMongo
         private Mongo m_mongo;
         private Database m_db;
 
+        public bool IsOpen { get; private set; }
+
         public void Open()
         {
+            if (this.IsOpen) return;
+
             this.m_mongo.Connect();
             this.m_db = this.m_mongo[this.m_dbName];
+
+            this.IsOpen = true;
         }
 
         public void Dispose()

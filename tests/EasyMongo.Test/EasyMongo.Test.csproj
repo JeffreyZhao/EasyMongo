@@ -51,6 +51,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataContextTest.cs" />
     <Compile Include="PredicateCollectorTest.cs" />
     <Compile Include="Mapping\PropertyMapTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
