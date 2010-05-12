@@ -41,15 +41,48 @@ namespace EasyMongo
             return predicateDoc;
         }
 
-        internal Document GetDocument(object entity)
+        public Document GetDocument(object entity)
         {
             var doc = new Document();
             foreach (var mapper in this.m_properties.Values)
             { 
-                mapper.FillDocument(doc, entity);
+                mapper.PutEntityValue(doc, entity);
             }
 
             return doc;
+        }
+
+        public Document GetFields()
+        {
+            var doc = new Document();
+            foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
+            {
+                mapper.PutField(doc);
+            }
+
+            return doc;
+        }
+
+        public Dictionary<PropertyInfo, object> GetEntityState(object entity)
+        {
+            var state = new Dictionary<PropertyInfo, object>();
+            foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
+            {
+                mapper.PutEntityState(state, entity);
+            }
+
+            return state;
+        }
+
+        public object GetEntity(Document doc)
+        {
+            var entity = Activator.CreateInstance(this.Descriptor.Type);
+            foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
+            {
+                mapper.SetEntityValue(entity, doc);
+            }
+
+            return entity;
         }
     }
 }

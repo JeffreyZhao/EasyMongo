@@ -54,19 +54,19 @@ namespace EasyMongo
             switch (this.OpType)
             {
                 case ExpressionType.Equal:
-                    mapper.FillEqualPredicate(doc, this.Constant);
+                    mapper.PutEqualPredicate(doc, this.Constant);
                     break;
                 case ExpressionType.GreaterThan:
-                    mapper.FillGreaterThanPredicate(doc, this.Constant);
+                    mapper.PutGreaterThanPredicate(doc, this.Constant);
                     break;
                 case ExpressionType.GreaterThanOrEqual:
-                    mapper.FillGreaterThanOrEqualPredicate(doc, this.Constant);
+                    mapper.PutGreaterThanOrEqualPredicate(doc, this.Constant);
                     break;
                 case ExpressionType.LessThan:
-                    mapper.FillLessThanPredicate(doc, this.Constant);
+                    mapper.PutLessThanPredicate(doc, this.Constant);
                     break;
                 case ExpressionType.LessThanOrEqual:
-                    mapper.FillLessThanOrEqualPredicate(doc, this.Constant);
+                    mapper.PutLessThanOrEqualPredicate(doc, this.Constant);
                     break;
                 default:
                     throw new NotSupportedException();

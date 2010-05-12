@@ -9,6 +9,7 @@ using System.Reflection;
 namespace EasyMongo.Mapping
 {
     public abstract class EntityMap<T> : IEntityMap
+        where T : class
     {
         public EntityMap()
         {
@@ -18,7 +19,7 @@ namespace EasyMongo.Mapping
 
         private Dictionary<PropertyInfo, IPropertyMap> m_propertyMaps;
         private string m_collectionName;
-        
+
         public PropertyMap<T, TProperty> Property<TProperty>(Expression<Func<T, TProperty>> property)
         {
             var propertyMap = new PropertyMap<T, TProperty>(property);
