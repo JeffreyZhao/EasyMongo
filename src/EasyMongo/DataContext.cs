@@ -45,10 +45,10 @@ namespace EasyMongo
             var coll = mapper.GetCollection(this.m_database);
 
             var doc = coll.Find(predicateDoc, 1, 0, fieldsDoc).Documents.SingleOrDefault();
+            if (doc == null) return default(T);
+
             var entity = mapper.GetEntity(doc);
-
             this.TrackEntityState(mapper, entity);
-
             return (T)entity;
         }
 
@@ -97,6 +97,8 @@ namespace EasyMongo
         {
             this.m_database.Open();
 
+            this.UpdateEntityState();
+
             this.SaveEntityAdded();
         }
 
@@ -122,12 +124,34 @@ namespace EasyMongo
             this.m_itemAdded = null;
         }
 
-        private HashBag<EntityMapper, Dictionary<PropertyInfo, object>> m_stateLoaded;
+        private void UpdateEntityState()
+        {
+            if (this.m_stateLoaded == null) return;
+
+            this.m_database.Open();
+
+            foreach (var pair in this.m_stateLoaded)
+            {
+                var entity = pair.Key;
+                var originalState = pair.Value;
+                var mapper = originalState.Mapper;
+                var currentState = mapper.GetEntityState(entity);
+
+                var docToUpdate = mapper.GetStateChanged(originalState, currentState);
+                var predicate = mapper.GetIdentity(entity);
+                var coll = mapper.GetCollection(this.m_database);
+
+                coll.Update(docToUpdate, predicate);
+                this.m_stateLoaded[entity] = currentState;
+            }
+        }
+
+        private Dictionary<object, EntityState> m_stateLoaded;
         private void EnsureStateLoadedCreated()
         {
             if (this.m_stateLoaded == null)
             {
-                this.m_stateLoaded = new HashBag<EntityMapper, Dictionary<PropertyInfo, object>>();
+                this.m_stateLoaded = new Dictionary<object, EntityState>();
             }
         }
 
@@ -137,7 +161,7 @@ namespace EasyMongo
 
             var state = mapper.GetEntityState(entity);
             this.EnsureStateLoadedCreated();
-            this.m_stateLoaded.Add(mapper, state);
+            this.m_stateLoaded.Add(entity, state);
         }
 
         public void Attach<T>(T entity)

@@ -75,7 +75,7 @@ namespace EasyMongo
             this.PutInnerPredicate(doc, "$lte", value);
         }
 
-        public void PutEntityValue(Document target, object sourceEntity)
+        public void PutValue(Document target, object sourceEntity)
         {
             object docValue;
 
@@ -106,111 +106,27 @@ namespace EasyMongo
             target.Append(this.Descriptor.Name, docValue);
         }
 
-        /*public void SetEntityState(object targetEntity, Dictionary<PropertyInfo, object> sourceState)
-        {
-            var property = this.Descriptor.Property;
-            var type = property.PropertyType;
-
-            var value = sourceState[property];
-            if (typeof(IList).IsAssignableFrom(type)) // is array
-            {
-                var list = (IList)Activator.CreateInstance(type);
-                foreach (var item in (List<object>)value) list.Add(item);
-                value = list;
-            }
-
-            this.Descriptor.Property.SetValue(targetEntity, value, null);
-        }
-
-        public void PutEntityState(Dictionary<PropertyInfo, object> targetState, Document sourceDoc)
-        {
-            var name = this.Descriptor.Name;
-
-            object docValue;
-            if (sourceDoc.Contains(name))
-            {
-                docValue = sourceDoc[name];
-                if (docValue == MongoDBNull.Value) docValue = null;
-            }
-            else if (this.Descriptor.HasDefaultValue)
-            {
-                docValue = this.Descriptor.DefaultValue;
-            }
-            else
-            {
-                throw new ArgumentException("Missing the value of " + name);
-            }
-
-            var property = this.Descriptor.Property;
-            var type = property.PropertyType;
-            object value;
-
-            if (typeof(IList).IsAssignableFrom(type)) // is array
-            {
-                if (docValue == null)
-                {
-                    value = null;
-                }
-                else
-                {
-                    value = (docValue is Document) ? // empty array
-                        new List<object>() :
-                        ((IEnumerable)docValue).Cast<object>().ToList();
-                }
-            }
-            else if (type.IsEnum)
-            {
-                if (docValue == null)
-                {
-                    throw new ArgumentException("Enum value cannot be assigned to null for " + name);
-                }
-
-                if (type.IsDefined(typeof(FlagsAttribute), false))
-                {
-                    if (docValue is Document) // empty array;
-                    {
-                        value = Enum.Parse(type, "");
-                    }
-                    else
-                    {
-                        var array = ((IEnumerable)docValue).Cast<string>().ToArray();
-                        value = Enum.Parse(type, String.Join(", ", array));
-                    }
-                }
-                else
-                {
-                    value = Enum.Parse(type, docValue.ToString());
-                }
-            }
-            else
-            {
-                value = docValue;
-            }
-
-            targetState.Add(this.Descriptor.Property, value);
-        }*/
-
         public void PutField(Document doc)
         {
             doc.Append(this.Descriptor.Name, 1);
         }
 
-        public void PutEntityState(Dictionary<PropertyInfo, object> targetState, object sourceEntity)
+        public void PutState(Dictionary<PropertyMapper, object> targetState, object sourceEntity)
         {
             var name = this.Descriptor.Name;
             var property = this.Descriptor.Property;
             var type = property.PropertyType;
 
             object value = property.GetValue(sourceEntity, null);
-            if (typeof(IList).IsAssignableFrom(type)) // is array
+            if (typeof(IList).IsAssignableFrom(type) && value != null) // is array
             {
-                value = ((IList)value).Cast<object>().ToList();
+                value = new ArrayState((IList)value);
             }
 
-            targetState.Add(this.Descriptor.Property, value);
+            targetState.Add(this, value);
         }
 
-        public void SetEntityValue(object targetEntity, Document sourceDoc)
+        public void SetValue(object targetEntity, Document sourceDoc)
         {
             var name = this.Descriptor.Name;
 
@@ -280,6 +196,93 @@ namespace EasyMongo
             }
 
             property.SetValue(targetEntity, value, null);
+        }
+
+        public void TryPutStateChange(
+            Document targetDoc,
+            Dictionary<PropertyMapper, object> originalState,
+            Dictionary<PropertyMapper, object> currentState)
+        {
+            var name = this.Descriptor.Name;
+            var property = this.Descriptor.Property;
+            var type = property.PropertyType;
+
+            var originalValue = originalState[this];
+            var currentValue = currentState[this];
+
+            if (typeof(IList).IsAssignableFrom(type)) // is array
+            {
+                var originalArray = (ArrayState)originalValue;
+                var currentArray = (ArrayState)currentValue;
+
+                if (currentArray == null && originalArray != null)
+                {
+                    this.AppendOperation(targetDoc, "$set", null);
+                }
+                else if (currentArray != null && originalArray == null)
+                {
+                    var value = currentArray.Items.ToArray();
+                    this.AppendOperation(targetDoc, "$set", value);
+                }
+                else if (!Object.ReferenceEquals(originalArray.Container, currentArray.Container))
+                {
+                    var value = currentArray.Items.ToArray();
+                    this.AppendOperation(targetDoc, "$set", value);
+                }
+                else
+                {
+                    var itemAdded = currentArray.Items.Where(i => !originalArray.Items.Contains(i)).ToArray();
+                    var itemRemoved = originalArray.Items.Where(i => !currentArray.Items.Contains(i)).ToArray();
+
+                    if (itemAdded.Length > 0)
+                    {
+                        this.AppendOperation(targetDoc, "$pushAll", itemAdded);
+                    }
+
+                    if (itemRemoved.Length > 0)
+                    {
+                        this.AppendOperation(targetDoc, "$pullAll", itemRemoved);
+                    }
+                }
+            }
+            else if (originalValue != currentValue)
+            {
+                object value;
+
+                if (type.IsEnum)
+                {
+                    if (type.IsDefined(typeof(FlagsAttribute), false))
+                    {
+                        value = currentValue.ToString().Split(new[] { ", " }, StringSplitOptions.None);
+                    }
+                    else
+                    {
+                        value = currentValue.ToString();
+                    }
+                }
+                else
+                {
+                    value = currentValue;
+                }
+
+                this.AppendOperation(targetDoc, "$set", value);
+            }
+        }
+
+        private void AppendOperation(Document doc, string op, object value)
+        {
+            Document innerDoc;
+            if (doc.Contains(op))
+            {
+                innerDoc = (Document)doc[op];
+            }
+            else
+            {
+                innerDoc = new Document();
+                doc.Append(op, innerDoc);
+            }
+
+            innerDoc.Append(this.Descriptor.Name, value);
         }
     }
 }

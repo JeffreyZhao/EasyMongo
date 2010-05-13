@@ -83,7 +83,7 @@ namespace EasyMongo.Test
             var user = new User();
 
             var doc = new Document().Append("Hobbies", new[] { "Ball", "Piano" });
-            mapper.SetEntityValue(user, doc);
+            mapper.SetValue(user, doc);
 
             Assert.Equal(2, user.Hobbies.Count);
             Assert.Equal("Ball", user.Hobbies[0]);
@@ -102,7 +102,7 @@ namespace EasyMongo.Test
             var user = new User();
 
             var doc = new Document().Append("Gender", "Female");
-            mapper.SetEntityValue(user, doc);
+            mapper.SetValue(user, doc);
             Assert.Equal(Gender.Female, user.Gender);
         }
 
@@ -118,7 +118,7 @@ namespace EasyMongo.Test
             var user = new User();
 
             var doc = new Document().Append("Types", new[] { "Type1", "Type3" });
-            mapper.SetEntityValue(user, doc);
+            mapper.SetValue(user, doc);
             Assert.Equal(UserTypes.Type1 | UserTypes.Type3, user.Types);
         }
 
@@ -136,17 +136,18 @@ namespace EasyMongo.Test
                 Hobbies = new List<string> { "Ball", "Piano" }
             };
 
-            var state = new Dictionary<PropertyInfo, object>();
-            mapper.PutEntityState(state, user);
+            var state = new Dictionary<PropertyMapper, object>();
+            mapper.PutState(state, user);
 
-            var list = (List<object>)state[property];
-            Assert.Equal(2, list.Count);
-            Assert.Equal("Ball", list[0]);
-            Assert.Equal("Piano", list[1]);
+            var arrayState = (ArrayState)state[mapper];
+            Assert.Same(user.Hobbies, arrayState.Container);
+            Assert.Equal(2, arrayState.Items.Count);
+            Assert.Equal("Ball", arrayState.Items[0]);
+            Assert.Equal("Piano", arrayState.Items[1]);
         }
 
-        /*[Fact]
-        public void SetArrayState()
+        [Fact]
+        public void TryPutStateChange_NewArray()
         {
             var property = typeof(User).GetProperty("Hobbies");
             var mockDescriptor = new Mock<IPropertyDescriptor>();
@@ -154,17 +155,148 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
 
             var mapper = new PropertyMapper(mockDescriptor.Object);
-            var state = new Dictionary<PropertyInfo, object>()
+
+            var originalState = new Dictionary<PropertyMapper, object>()
             {
-                { property, new List<object> { "Ball", "Piano" } }
+                { mapper, new ArrayState(new List<string> { "Good", "Girl" }) }
+            };
+            var currentState = new Dictionary<PropertyMapper, object>()
+            {
+                { mapper, new ArrayState(new List<string> { "Bad", "Boy" }) }
             };
 
-            var user = new User();
-            mapper.SetEntityState(user, state);
+            var doc = new Document();
+            mapper.TryPutStateChange(doc, originalState, currentState);
 
-            Assert.Equal(2, user.Hobbies.Count);
-            Assert.Equal("Ball", user.Hobbies[0]);
-            Assert.Equal("Piano", user.Hobbies[1]);
-        }*/
+            var innerDoc = (Document)doc["$set"];
+            Assert.Equal(1, innerDoc.Count);
+
+            var array = (object[])innerDoc["Hobbies"];
+            Assert.Equal("Bad", array[0]);
+            Assert.Equal("Boy", array[1]);
+        }
+
+        [Fact]
+        public void TryPutStateChange_AddItemToArray()
+        {
+            var property = typeof(User).GetProperty("Hobbies");
+            var mockDescriptor = new Mock<IPropertyDescriptor>();
+            mockDescriptor.Setup(d => d.Property).Returns(property);
+            mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
+
+            var mapper = new PropertyMapper(mockDescriptor.Object);
+
+            var list = new List<string> { "Good", "Girl" };
+            var originalState = new Dictionary<PropertyMapper, object>()
+            {
+                { mapper, new ArrayState(list) }
+            };
+
+            list.AddRange(new[] { "Hello", "World" });
+            var currentState = new Dictionary<PropertyMapper, object>()
+            {
+                { mapper, new ArrayState(list) }
+            };
+
+            var doc = new Document();
+            mapper.TryPutStateChange(doc, originalState, currentState);
+
+            var innerDoc = (Document)doc["$pushAll"];
+            Assert.Equal(1, innerDoc.Count);
+
+            var array = (object[])innerDoc["Hobbies"];
+            Assert.Equal("Hello", array[0]);
+            Assert.Equal("World", array[1]);
+        }
+
+        [Fact]
+        public void TryPutStateChange_RemoveItemFromArray()
+        {
+            var property = typeof(User).GetProperty("Hobbies");
+            var mockDescriptor = new Mock<IPropertyDescriptor>();
+            mockDescriptor.Setup(d => d.Property).Returns(property);
+            mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
+
+            var mapper = new PropertyMapper(mockDescriptor.Object);
+
+            var list = new List<string> { "Good", "Girl", "Hello", "World" };
+            var originalState = new Dictionary<PropertyMapper, object>()
+            {
+                { mapper, new ArrayState(list) }
+            };
+
+            list.Remove("Good");
+            list.Remove("Girl");
+            var currentState = new Dictionary<PropertyMapper, object>()
+            {
+                { mapper, new ArrayState(list) }
+            };
+
+            var doc = new Document();
+            mapper.TryPutStateChange(doc, originalState, currentState);
+
+            var innerDoc = (Document)doc["$pullAll"];
+            Assert.Equal(1, innerDoc.Count);
+
+            var array = (object[])innerDoc["Hobbies"];
+            Assert.Equal("Good", array[0]);
+            Assert.Equal("Girl", array[1]);
+        }
+
+        [Fact]
+        public void TryPutStateChange_ChangeFlags()
+        {
+            var property = typeof(User).GetProperty("Types");
+            var mockDescriptor = new Mock<IPropertyDescriptor>();
+            mockDescriptor.Setup(d => d.Property).Returns(property);
+            mockDescriptor.Setup(d => d.Name).Returns("Types");
+
+            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var originalState = new Dictionary<PropertyMapper, object>()
+            {
+                { mapper, UserTypes.Type1 | UserTypes.Type2 }
+            };
+            var currentState = new Dictionary<PropertyMapper, object>()
+            {
+                { mapper, UserTypes.Type2 | UserTypes.Type3 }
+            };
+
+            var doc = new Document();
+            mapper.TryPutStateChange(doc, originalState, currentState);
+
+            var innerDoc = (Document)doc["$set"];
+            Assert.Equal(1, innerDoc.Count);
+
+            var array = (string[])innerDoc["Types"];
+            Assert.Equal("Type2", array[0]);
+            Assert.Equal("Type3", array[1]);
+        }
+
+        [Fact]
+        public void TryPutStateChange_ChangeEnum()
+        {
+            var property = typeof(User).GetProperty("Gender");
+            var mockDescriptor = new Mock<IPropertyDescriptor>();
+            mockDescriptor.Setup(d => d.Property).Returns(property);
+            mockDescriptor.Setup(d => d.Name).Returns("Gender");
+
+            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var originalState = new Dictionary<PropertyMapper, object>()
+            {
+                { mapper, Gender.Female }
+            };
+            var currentState = new Dictionary<PropertyMapper, object>()
+            {
+                { mapper, Gender.Male }
+            };
+
+            var doc = new Document();
+            mapper.TryPutStateChange(doc, originalState, currentState);
+
+            var innerDoc = (Document)doc["$set"];
+            Assert.Equal(1, innerDoc.Count);
+
+            Assert.Equal("Male", innerDoc["Gender"]);
+        }
     }
 }

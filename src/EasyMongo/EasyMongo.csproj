@@ -43,10 +43,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArrayState.cs" />
     <Compile Include="BinaryPredicate.cs" />
     <Compile Include="Collections\HashBag.cs" />
     <Compile Include="DataContext.cs" />
     <Compile Include="EntityMapper.cs" />
+    <Compile Include="EntityState.cs" />
     <Compile Include="Expressions\ExpressionExtensions.cs" />
     <Compile Include="Expressions\ExpressionVisitor.cs" />
     <Compile Include="Expressions\PartialEvaluator.cs" />

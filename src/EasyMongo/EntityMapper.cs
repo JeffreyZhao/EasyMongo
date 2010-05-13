@@ -16,9 +16,12 @@ namespace EasyMongo
             this.m_properties = descriptor.Properties.ToDictionary(
                 p => p.Property,
                 p => new PropertyMapper(p));
+
+            this.m_identityMapper = this.m_properties.Values.Single(m => m.Descriptor.IsIdentity);
         }
 
-        public Dictionary<PropertyInfo, PropertyMapper> m_properties;
+        private Dictionary<PropertyInfo, PropertyMapper> m_properties;
+        private PropertyMapper m_identityMapper;
 
         public IEntityDescriptor Descriptor { get; private set; }
 
@@ -46,7 +49,7 @@ namespace EasyMongo
             var doc = new Document();
             foreach (var mapper in this.m_properties.Values)
             { 
-                mapper.PutEntityValue(doc, entity);
+                mapper.PutValue(doc, entity);
             }
 
             return doc;
@@ -63,15 +66,22 @@ namespace EasyMongo
             return doc;
         }
 
-        public Dictionary<PropertyInfo, object> GetEntityState(object entity)
+        public EntityState GetEntityState(object entity)
         {
-            var state = new Dictionary<PropertyInfo, object>();
+            var state = new EntityState(this);
             foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
             {
-                mapper.PutEntityState(state, entity);
+                mapper.PutState(state, entity);
             }
 
             return state;
+        }
+
+        public Document GetIdentity(object entity)
+        { 
+            var doc = new Document();
+            this.m_identityMapper.PutValue(doc, entity);
+            return doc;
         }
 
         public object GetEntity(Document doc)
@@ -79,10 +89,24 @@ namespace EasyMongo
             var entity = Activator.CreateInstance(this.Descriptor.Type);
             foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
             {
-                mapper.SetEntityValue(entity, doc);
+                mapper.SetValue(entity, doc);
             }
 
             return entity;
+        }
+
+        public Document GetStateChanged(EntityState original, EntityState current)
+        {
+            var result = new Document();
+
+            foreach (var mapper in this.m_properties.Values.Where(p => !p.IsReadOnly))
+            {
+                mapper.TryPutStateChange(result, original, current);
+            }
+
+            // TODO: dependency update
+
+            return result;
         }
     }
 }
