@@ -101,7 +101,10 @@ namespace EasyMongo
 
             foreach (var mapper in this.m_properties.Values.Where(p => !p.IsReadOnly))
             {
-                mapper.TryPutStateChange(result, original, current);
+                if (mapper.IsChanged(original, current))
+                {
+                    mapper.PutStateChange(result, original, current);
+                }
             }
 
             // TODO: dependency update

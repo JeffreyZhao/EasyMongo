@@ -111,7 +111,7 @@ namespace EasyMongo
             doc.Append(this.Descriptor.Name, 1);
         }
 
-        public void PutState(Dictionary<PropertyMapper, object> targetState, object sourceEntity)
+        public void PutState(Dictionary<IPropertyDescriptor, object> targetState, object sourceEntity)
         {
             var name = this.Descriptor.Name;
             var property = this.Descriptor.Property;
@@ -123,7 +123,7 @@ namespace EasyMongo
                 value = new ArrayState((IList)value);
             }
 
-            targetState.Add(this, value);
+            targetState.Add(this.Descriptor, value);
         }
 
         public void SetValue(object targetEntity, Document sourceDoc)
@@ -198,17 +198,68 @@ namespace EasyMongo
             property.SetValue(targetEntity, value, null);
         }
 
-        public void TryPutStateChange(
-            Document targetDoc,
-            Dictionary<PropertyMapper, object> originalState,
-            Dictionary<PropertyMapper, object> currentState)
+        public bool IsChanged(
+            Dictionary<IPropertyDescriptor, object> originalState,
+            Dictionary<IPropertyDescriptor, object> currentState)
         {
             var name = this.Descriptor.Name;
             var property = this.Descriptor.Property;
             var type = property.PropertyType;
 
-            var originalValue = originalState[this];
-            var currentValue = currentState[this];
+            var originalValue = originalState[this.Descriptor];
+            var currentValue = currentState[this.Descriptor];
+
+            if (typeof(IList).IsAssignableFrom(type)) // is array
+            {
+                var originalArray = (ArrayState)originalValue;
+                var currentArray = (ArrayState)currentValue;
+
+                if (currentArray == null && originalArray != null)
+                {
+                    return true;
+                }
+                else if (currentArray != null && originalArray == null)
+                {
+                    return true;
+                }
+                else if (!Object.ReferenceEquals(originalArray.Container, currentArray.Container))
+                {
+                    return true;
+                }
+                else if (currentArray.Items.Count != originalArray.Items.Count)
+                {
+                    return true;
+                }
+                else
+                {
+                    for (int i = 0; i < currentArray.Items.Count; i++)
+                    {
+                        if (currentArray.Items[0] != originalArray.Items[0])
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+            }
+            else
+            {
+                return originalValue != currentValue;
+            }
+        }
+
+        public void PutStateChange(
+            Document targetDoc,
+            Dictionary<IPropertyDescriptor, object> originalState,
+            Dictionary<IPropertyDescriptor, object> currentState)
+        {
+            var name = this.Descriptor.Name;
+            var property = this.Descriptor.Property;
+            var type = property.PropertyType;
+
+            var originalValue = originalState[this.Descriptor];
+            var currentValue = currentState[this.Descriptor];
 
             if (typeof(IList).IsAssignableFrom(type)) // is array
             {
@@ -229,19 +280,25 @@ namespace EasyMongo
                     var value = currentArray.Items.ToArray();
                     this.AppendOperation(targetDoc, "$set", value);
                 }
+                else if (originalArray.Items.Count > currentArray.Items.Count)
+                {
+                    throw new NotSupportedException("Does not support item removal in array.");
+                }
                 else
                 {
-                    var itemAdded = currentArray.Items.Where(i => !originalArray.Items.Contains(i)).ToArray();
-                    var itemRemoved = originalArray.Items.Where(i => !currentArray.Items.Contains(i)).ToArray();
+                    for (var i = 0; i < originalArray.Items.Count; i++)
+                    {
+                        if (originalArray.Items[i] != currentArray.Items[i])
+                        {
+                            throw new NotSupportedException("Does not support item removal in array.");
+                        }
+                    }
+
+                    var itemAdded = currentArray.Items.Skip(originalArray.Items.Count).ToArray();
 
                     if (itemAdded.Length > 0)
                     {
                         this.AppendOperation(targetDoc, "$pushAll", itemAdded);
-                    }
-
-                    if (itemRemoved.Length > 0)
-                    {
-                        this.AppendOperation(targetDoc, "$pullAll", itemRemoved);
                     }
                 }
             }
@@ -268,6 +325,77 @@ namespace EasyMongo
                 this.AppendOperation(targetDoc, "$set", value);
             }
         }
+
+        //public void TryPutStateChange(
+        //    Document targetDoc,
+        //    Dictionary<PropertyMapper, object> originalState,
+        //    Dictionary<PropertyMapper, object> currentState)
+        //{
+        //    var name = this.Descriptor.Name;
+        //    var property = this.Descriptor.Property;
+        //    var type = property.PropertyType;
+
+        //    var originalValue = originalState[this];
+        //    var currentValue = currentState[this];
+
+        //    if (typeof(IList).IsAssignableFrom(type)) // is array
+        //    {
+        //        var originalArray = (ArrayState)originalValue;
+        //        var currentArray = (ArrayState)currentValue;
+
+        //        if (currentArray == null && originalArray != null)
+        //        {
+        //            this.AppendOperation(targetDoc, "$set", null);
+        //        }
+        //        else if (currentArray != null && originalArray == null)
+        //        {
+        //            var value = currentArray.Items.ToArray();
+        //            this.AppendOperation(targetDoc, "$set", value);
+        //        }
+        //        else if (!Object.ReferenceEquals(originalArray.Container, currentArray.Container))
+        //        {
+        //            var value = currentArray.Items.ToArray();
+        //            this.AppendOperation(targetDoc, "$set", value);
+        //        }
+        //        else
+        //        {
+        //            /*var itemAdded = currentArray.Items.Where(i => !originalArray.Items.Contains(i)).ToArray();
+        //            var itemRemoved = originalArray.Items.Where(i => !currentArray.Items.Contains(i)).ToArray();
+
+        //            if (itemAdded.Length > 0)
+        //            {
+        //                this.AppendOperation(targetDoc, "$pushAll", itemAdded);
+        //            }
+
+        //            if (itemRemoved.Length > 0)
+        //            {
+        //                this.AppendOperation(targetDoc, "$pullAll", itemRemoved);
+        //            }*/
+        //        }
+        //    }
+        //    else if (originalValue != currentValue)
+        //    {
+        //        object value;
+
+        //        if (type.IsEnum)
+        //        {
+        //            if (type.IsDefined(typeof(FlagsAttribute), false))
+        //            {
+        //                value = currentValue.ToString().Split(new[] { ", " }, StringSplitOptions.None);
+        //            }
+        //            else
+        //            {
+        //                value = currentValue.ToString();
+        //            }
+        //        }
+        //        else
+        //        {
+        //            value = currentValue;
+        //        }
+
+        //        this.AppendOperation(targetDoc, "$set", value);
+        //    }
+        //}
 
         private void AppendOperation(Document doc, string op, object value)
         {

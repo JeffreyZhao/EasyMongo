@@ -7,7 +7,7 @@ using MongoDB.Driver;
 
 namespace EasyMongo
 {
-    internal class EntityState : Dictionary<PropertyMapper, object>
+    internal class EntityState : Dictionary<IPropertyDescriptor, object>
     {
         public EntityState(EntityMapper mapper)
         {
