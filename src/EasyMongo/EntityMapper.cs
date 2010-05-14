@@ -98,16 +98,24 @@ namespace EasyMongo
         public Document GetStateChanged(EntityState original, EntityState current)
         {
             var result = new Document();
+            var changedSet = new HashSet<PropertyInfo>();
 
             foreach (var mapper in this.m_properties.Values.Where(p => !p.IsReadOnly))
             {
                 if (mapper.IsChanged(original, current))
                 {
+                    changedSet.Add(mapper.Descriptor.Property);
                     mapper.PutStateChange(result, original, current);
                 }
             }
 
-            // TODO: dependency update
+            foreach (var mapper in this.m_properties.Values.Where(p => p.IsReadOnly))
+            {
+                if (mapper.Descriptor.ChangeWithProperties.Any(p => changedSet.Contains(p)))
+                {
+                    mapper.PutStateChange(result, original, current);
+                }
+            }
 
             return result;
         }
