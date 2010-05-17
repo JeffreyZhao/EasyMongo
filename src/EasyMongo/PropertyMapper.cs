@@ -249,6 +249,23 @@ namespace EasyMongo
             }
         }
 
+        public void PutValueChange(Document targetDoc, object sourceEntity)
+        {
+            Document innerDoc;
+            if (targetDoc.Contains("$set"))
+            {
+                innerDoc = (Document)targetDoc["$set"];
+            }
+            else
+            {
+                innerDoc = new Document();
+                innerDoc.Append("$set", innerDoc);
+            }
+
+            this.PutValue(innerDoc, sourceEntity);
+        }
+
+
         public void PutStateChange(
             Document targetDoc,
             Dictionary<IPropertyDescriptor, object> originalState,

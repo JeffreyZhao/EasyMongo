@@ -152,7 +152,7 @@ namespace EasyMongo
                 var mapper = originalState.Mapper;
                 var currentState = mapper.GetEntityState(entity);
 
-                var docToUpdate = mapper.GetStateChanged(originalState, currentState);
+                var docToUpdate = mapper.GetStateChanged(entity, originalState, currentState);
                 var predicate = mapper.GetIdentity(entity);
                 var coll = mapper.GetCollection(this.m_database);
 

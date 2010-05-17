@@ -114,7 +114,7 @@ namespace EasyMongo
             return entity;
         }
 
-        public Document GetStateChanged(EntityState original, EntityState current)
+        public Document GetStateChanged(object entity, EntityState original, EntityState current)
         {
             var result = new Document();
             var changedSet = new HashSet<PropertyInfo>();
@@ -132,7 +132,7 @@ namespace EasyMongo
             {
                 if (mapper.Descriptor.ChangeWithProperties.Any(p => changedSet.Contains(p)))
                 {
-                    mapper.PutStateChange(result, original, current);
+                    mapper.PutValueChange(result, entity);
                 }
             }
 
