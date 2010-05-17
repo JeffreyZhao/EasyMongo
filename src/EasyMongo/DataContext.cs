@@ -90,6 +90,14 @@ namespace EasyMongo
             return result;
         }
 
+        internal int Count<T>(Expression predicate)
+        {
+            var mapper = this.m_mappingSource.GetEntityMapper<T>();
+            var predicateDoc = mapper.GetPredicate(predicate);
+            var coll = mapper.GetCollection(this.m_database);
+            return (int)coll.Count(predicateDoc);
+        }
+
         private HashBag<EntityMapper, object> m_itemAdded;
         private void EnsureItemAddedCreated()
         {

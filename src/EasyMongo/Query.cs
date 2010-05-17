@@ -82,6 +82,11 @@ namespace EasyMongo
             return this;
         }
 
+        public int Count()
+        {
+            return this.m_db.Count<T>(this.m_predicate);
+        }
+
         public List<T> Load()
         {
             return this.m_db.List<T>(
