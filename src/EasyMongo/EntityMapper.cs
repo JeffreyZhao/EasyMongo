@@ -55,12 +55,25 @@ namespace EasyMongo
             return doc;
         }
 
-        public Document GetFields()
+        public Document GetFields(Expression selector)
         {
             var doc = new Document();
-            foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
+
+            if (selector == null)
             {
-                mapper.PutField(doc);
+                foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
+                {
+                    mapper.PutField(doc);
+                }
+            }
+            else
+            {
+                var initExpr = (MemberInitExpression)selector;
+                foreach (var binding in initExpr.Bindings)
+                {
+                    var propInfo = (PropertyInfo)binding.Member;
+                    this.m_properties[propInfo].PutField(doc);
+                }
             }
 
             return doc;
@@ -115,6 +128,20 @@ namespace EasyMongo
                 {
                     mapper.PutStateChange(result, original, current);
                 }
+            }
+
+            return result;
+        }
+
+        public  Document GetSortOrders(List<SortOrder> sortOrders)
+        {
+            Document result = new Document();
+
+            foreach (var order in sortOrders)
+            {
+                var propExpr = (MemberExpression)order.KeySelector;
+                var propInfo = (PropertyInfo)propExpr.Member;
+                this.m_properties[propInfo].PutSortOrder(result, order.Descending);
             }
 
             return result;

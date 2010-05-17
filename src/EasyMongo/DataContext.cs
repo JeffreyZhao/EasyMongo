@@ -39,7 +39,7 @@ namespace EasyMongo
         {
             var mapper = this.m_mappingSource.GetEntityMapper<T>();
             var predicateDoc = mapper.GetPredicate(predicate.Body);
-            var fieldsDoc = mapper.GetFields();
+            var fieldsDoc = mapper.GetFields(null);
 
             this.m_database.Open();
             var coll = mapper.GetCollection(this.m_database);
@@ -52,15 +52,30 @@ namespace EasyMongo
             return (T)entity;
         }
 
-        public List<T> List<T>(Expression<Func<T, bool>> predicate, int skip, int limit) where T : class
+        public Query<T> Query<T>(Expression<Func<T, bool>> predicate) where T : class
+        {
+            return this.Query<T>().Where(predicate);
+        }
+
+        public Query<T> Query<T>() where T : class
+        {
+            return new Query<T>(this);
+        }
+
+        internal List<T> List<T>(Expression predicate, int skip, int? limit, List<SortOrder> sortOrders, Expression selector) where T : class
         {
             var mapper = this.m_mappingSource.GetEntityMapper<T>();
-            var predicateDoc = mapper.GetPredicate(predicate.Body);
-            var fieldsDoc = mapper.GetFields();
+            var predicateDoc = mapper.GetPredicate(predicate);
+            var fieldsDoc = mapper.GetFields(selector);
+            var sortDoc = mapper.GetSortOrders(sortOrders);
 
             this.m_database.Open();
             var coll = mapper.GetCollection(this.m_database);
-            var docList = coll.Find(predicateDoc, limit, skip, fieldsDoc).Documents.ToList();
+
+            var mongoQuery = coll.Find(predicateDoc).Fields(fieldsDoc).Skip(skip).Sort(sortDoc);
+            if (limit.HasValue) mongoQuery = mongoQuery.Limit(limit.Value);
+
+            var docList = mongoQuery.Documents.ToList();
 
             var result = new List<T>(docList.Count);
             foreach (var doc in docList)
@@ -130,7 +145,7 @@ namespace EasyMongo
 
             this.m_database.Open();
 
-            foreach (var pair in this.m_stateLoaded)
+            foreach (var pair in this.m_stateLoaded.ToList())
             {
                 var entity = pair.Key;
                 var originalState = pair.Value;

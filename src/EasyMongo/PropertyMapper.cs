@@ -245,7 +245,7 @@ namespace EasyMongo
             }
             else
             {
-                return originalValue != currentValue;
+                return !originalValue.Equals(currentValue);
             }
         }
 
@@ -302,7 +302,7 @@ namespace EasyMongo
                     }
                 }
             }
-            else if (originalValue != currentValue)
+            else if (!originalValue.Equals(currentValue))
             {
                 object value;
 
@@ -326,77 +326,6 @@ namespace EasyMongo
             }
         }
 
-        //public void TryPutStateChange(
-        //    Document targetDoc,
-        //    Dictionary<PropertyMapper, object> originalState,
-        //    Dictionary<PropertyMapper, object> currentState)
-        //{
-        //    var name = this.Descriptor.Name;
-        //    var property = this.Descriptor.Property;
-        //    var type = property.PropertyType;
-
-        //    var originalValue = originalState[this];
-        //    var currentValue = currentState[this];
-
-        //    if (typeof(IList).IsAssignableFrom(type)) // is array
-        //    {
-        //        var originalArray = (ArrayState)originalValue;
-        //        var currentArray = (ArrayState)currentValue;
-
-        //        if (currentArray == null && originalArray != null)
-        //        {
-        //            this.AppendOperation(targetDoc, "$set", null);
-        //        }
-        //        else if (currentArray != null && originalArray == null)
-        //        {
-        //            var value = currentArray.Items.ToArray();
-        //            this.AppendOperation(targetDoc, "$set", value);
-        //        }
-        //        else if (!Object.ReferenceEquals(originalArray.Container, currentArray.Container))
-        //        {
-        //            var value = currentArray.Items.ToArray();
-        //            this.AppendOperation(targetDoc, "$set", value);
-        //        }
-        //        else
-        //        {
-        //            /*var itemAdded = currentArray.Items.Where(i => !originalArray.Items.Contains(i)).ToArray();
-        //            var itemRemoved = originalArray.Items.Where(i => !currentArray.Items.Contains(i)).ToArray();
-
-        //            if (itemAdded.Length > 0)
-        //            {
-        //                this.AppendOperation(targetDoc, "$pushAll", itemAdded);
-        //            }
-
-        //            if (itemRemoved.Length > 0)
-        //            {
-        //                this.AppendOperation(targetDoc, "$pullAll", itemRemoved);
-        //            }*/
-        //        }
-        //    }
-        //    else if (originalValue != currentValue)
-        //    {
-        //        object value;
-
-        //        if (type.IsEnum)
-        //        {
-        //            if (type.IsDefined(typeof(FlagsAttribute), false))
-        //            {
-        //                value = currentValue.ToString().Split(new[] { ", " }, StringSplitOptions.None);
-        //            }
-        //            else
-        //            {
-        //                value = currentValue.ToString();
-        //            }
-        //        }
-        //        else
-        //        {
-        //            value = currentValue;
-        //        }
-
-        //        this.AppendOperation(targetDoc, "$set", value);
-        //    }
-        //}
-
         private void AppendOperation(Document doc, string op, object value)
         {
             Document innerDoc;
@@ -411,6 +340,11 @@ namespace EasyMongo
             }
 
             innerDoc.Append(this.Descriptor.Name, value);
+        }
+
+        public void PutSortOrder(Document doc, bool descending)
+        {
+            doc.Append(this.Descriptor.Name, descending ? -1 : 1);
         }
     }
 }
