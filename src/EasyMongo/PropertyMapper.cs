@@ -106,9 +106,9 @@ namespace EasyMongo
             target.Append(this.Descriptor.Name, docValue);
         }
 
-        public void PutField(Document doc)
+        public void PutField(Document doc, bool include)
         {
-            doc.Append(this.Descriptor.Name, 1);
+            doc.Append(this.Descriptor.Name, include ? 1 : 0);
         }
 
         public void PutState(Dictionary<IPropertyDescriptor, object> targetState, object sourceEntity)

@@ -63,16 +63,22 @@ namespace EasyMongo
             {
                 foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
                 {
-                    mapper.PutField(doc);
+                    mapper.PutField(doc, true);
                 }
             }
             else
             {
-                var initExpr = (MemberInitExpression)selector;
-                foreach (var binding in initExpr.Bindings)
+                var methodCall = (MethodCallExpression)selector;
+                var include = methodCall.Method.Name == "PartialWith";
+
+                var argsExpr = (NewArrayExpression)(methodCall).Arguments[1];
+                foreach (UnaryExpression expr in argsExpr.Expressions)
                 {
-                    var propInfo = (PropertyInfo)binding.Member;
-                    this.m_properties[propInfo].PutField(doc);
+                    var lambdaExpr = (LambdaExpression)expr.Operand;
+                    var propExpr = (MemberExpression)lambdaExpr.Body;
+                    var propInfo = (PropertyInfo)propExpr.Member;
+
+                    this.m_properties[propInfo].PutField(doc, include);
                 }
             }
 

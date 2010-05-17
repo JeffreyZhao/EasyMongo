@@ -53,6 +53,7 @@
     <Compile Include="Expressions\ExpressionVisitor.cs" />
     <Compile Include="Expressions\PartialEvaluator.cs" />
     <Compile Include="IMongoDatabase.cs" />
+    <Compile Include="PartialExtensions.cs" />
     <Compile Include="PredicateCollector.cs" />
     <Compile Include="IArray.cs" />
     <Compile Include="IEntityDescriptor.cs" />
