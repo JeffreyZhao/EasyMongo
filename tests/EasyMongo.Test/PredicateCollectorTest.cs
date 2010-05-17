@@ -14,6 +14,7 @@ namespace EasyMongo.Test
             public int UserID { get; set; }
             public int Age { get; set; }
             public int Size { get; set; }
+            public List<string> Tags { get; set; }
         }
 
         [Fact]
@@ -60,6 +61,18 @@ namespace EasyMongo.Test
             Assert.Equal(typeof(User).GetProperty("Size"), sizePredicate.Property);
             Assert.Equal(ExpressionType.Equal, sizePredicate.OpType);
             Assert.Equal(10, sizePredicate.Constant);
+        }
+
+        [Fact]
+        public void Contains()
+        {
+            string tag = "Geek";
+            Expression<Func<User, bool>> expr = u => u.Tags.Contains(tag.ToLower());
+            var predicate = (MethodCallPredicate)new PredicateCollector().Collect(expr.Body).Single();
+
+            Assert.Equal(typeof(User).GetProperty("Tags"), predicate.Property);
+            Assert.Equal("Contains", predicate.Method.Name);
+            Assert.Equal("geek", predicate.Constant);
         }
     }
 }

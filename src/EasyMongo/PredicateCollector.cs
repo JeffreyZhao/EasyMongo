@@ -24,6 +24,21 @@ namespace EasyMongo
             return evaluator.Eval(predicate);
         }
 
+        protected override Expression VisitMethodCall(MethodCallExpression m)
+        {
+            switch (m.Method.Name)
+            {
+                case "Contains":
+                    this.m_predicates.Add(new MethodCallPredicate(m));
+                    break;
+                default:
+                    throw new NotSupportedException(
+                        String.Format("{0} is not supported", m.Method));
+            }
+
+            return m;
+        }
+
         protected override Expression VisitBinary(BinaryExpression b)
         {
             switch (b.NodeType)

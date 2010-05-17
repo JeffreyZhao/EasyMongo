@@ -75,6 +75,11 @@ namespace EasyMongo
             this.PutInnerPredicate(doc, "$lte", value);
         }
 
+        public void PutContainsPredicate(Document doc, object value)
+        {
+            doc.Append(this.Descriptor.Name, value);
+        }
+
         public void PutValue(Document target, object sourceEntity)
         {
             object docValue;
