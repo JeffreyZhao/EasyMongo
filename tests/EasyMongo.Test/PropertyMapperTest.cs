@@ -17,7 +17,7 @@ namespace EasyMongo.Test
             var mockDescriptor = new Mock<IPropertyDescriptor>();
             mockDescriptor.Setup(d => d.Name).Returns("Hello");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
             var doc = new Document();
             mapper.PutEqualPredicate(doc, 20);
 
@@ -31,7 +31,7 @@ namespace EasyMongo.Test
             var mockDescriptor = new Mock<IPropertyDescriptor>();
             mockDescriptor.Setup(d => d.Name).Returns("Hello");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
             var doc = new Document();
             mapper.PutGreaterThanPredicate(doc, 10);
             mapper.PutLessThanPredicate(doc, 20);
@@ -79,7 +79,7 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Property).Returns(property);
             mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
             var user = new User();
 
             var doc = new Document().Append("Hobbies", new[] { "Ball", "Piano" });
@@ -98,7 +98,7 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Property).Returns(property);
             mockDescriptor.Setup(d => d.Name).Returns("Gender");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
             var user = new User();
 
             var doc = new Document().Append("Gender", "Female");
@@ -114,7 +114,7 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Property).Returns(property);
             mockDescriptor.Setup(d => d.Name).Returns("Types");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
             var user = new User();
 
             var doc = new Document().Append("Types", new[] { "Type1", "Type3" });
@@ -130,7 +130,7 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Property).Returns(property);
             mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
             var user = new User
             {
                 Hobbies = new List<string> { "Ball", "Piano" }
@@ -154,7 +154,7 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Property).Returns(property);
             mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
 
             var originalState = new Dictionary<IPropertyDescriptor, object>
             {
@@ -184,7 +184,7 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Property).Returns(property);
             mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
 
             var list = new List<string> { "Good", "Girl" };
             var originalState = new Dictionary<IPropertyDescriptor, object>
@@ -217,7 +217,7 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Property).Returns(property);
             mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
 
             var list = new List<string> { "Good", "Girl", "Hello", "World" };
             var originalState = new Dictionary<IPropertyDescriptor, object>
@@ -247,7 +247,7 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Property).Returns(property);
             mockDescriptor.Setup(d => d.Name).Returns("Types");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
             var originalState = new Dictionary<IPropertyDescriptor, object>
             {
                 { mapper.Descriptor, UserTypes.Type1 | UserTypes.Type2 }
@@ -276,7 +276,7 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Property).Returns(property);
             mockDescriptor.Setup(d => d.Name).Returns("Gender");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object);
+            var mapper = new PropertyMapper(mockDescriptor.Object, false);
             var originalState = new Dictionary<IPropertyDescriptor, object>
             {
                 { mapper.Descriptor, Gender.Female }

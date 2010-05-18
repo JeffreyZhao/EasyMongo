@@ -62,7 +62,7 @@ namespace EasyMongo.Test
             mockDatabase.Setup(d => d["Users"]).Returns(mockColl.Object);
 
             var db = new DataContext(mockDatabase.Object, GetMappingSource(), true);
-            db.Add(user);
+            db.InsertOnSubmit(user);
             db.SubmitChanges();
 
             mockDatabase.Verify();

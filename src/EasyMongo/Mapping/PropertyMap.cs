@@ -30,23 +30,12 @@ namespace EasyMongo.Mapping
 
         public PropertyMap<TEntity, TProperty> Identity()
         {
-            if (this.m_name != null)
-            {
-                throw new InvalidOperationException("A property with specified name cannot be identity.");
-            }
-
             this.m_isIdentity = true;
-            this.m_name = "_id";
             return this;
         }
 
         public PropertyMap<TEntity, TProperty> Name(string name)
         {
-            if (this.m_isIdentity)
-            {
-                throw new InvalidOperationException("Identity cannot use specified name.");
-            }
-
             this.m_name = name;
             return this;
         }

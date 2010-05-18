@@ -90,6 +90,15 @@ namespace EasyMongo
             return result;
         }
 
+        private Dictionary<object, EntityState> m_stateLoaded;
+        private void EnsureStateLoadedCreated()
+        {
+            if (this.m_stateLoaded == null)
+            {
+                this.m_stateLoaded = new Dictionary<object, EntityState>();
+            }
+        }
+
         internal int Count<T>(Expression predicate)
         {
             var mapper = this.m_mappingSource.GetEntityMapper<T>();
@@ -98,60 +107,102 @@ namespace EasyMongo
             return (int)coll.Count(predicateDoc);
         }
 
-        private HashBag<EntityMapper, object> m_itemAdded;
-        private void EnsureItemAddedCreated()
+        public void InsertOnSubmit<T>(T item) where T : class
         {
-            if (this.m_itemAdded == null)
-            {
-                this.m_itemAdded = new HashBag<EntityMapper, object>();
-            }
-        }
+            if (item == null) throw new ArgumentNullException();
 
-        public void Add<T>(T item)
-        {
             var mapper = this.m_mappingSource.GetEntityMapper<T>();
             if (mapper == null) throw new ArgumentException(typeof(T).FullName + " is not supported.");
 
-            this.EnsureItemAddedCreated();
-            this.m_itemAdded.Add(mapper, item);
+            this.EnsureItemsToInsertCreated();
+            this.m_itemsToInsert.Add(mapper, item);
+        }
+
+        private HashBag<EntityMapper, object> m_itemsToInsert;
+        private void EnsureItemsToInsertCreated()
+        {
+            if (this.m_itemsToInsert == null)
+            {
+                this.m_itemsToInsert = new HashBag<EntityMapper, object>();
+            }
+        }
+
+        public void DeleteOnSubmit<T>(T item) where T : class
+        {
+            if (item == null) throw new ArgumentNullException();
+
+            var mapper = this.m_mappingSource.GetEntityMapper<T>();
+            if (mapper == null) throw new ArgumentException(typeof(T).FullName + " is not supported.");
+
+            this.EnsureItemsToDeleteCreated();
+            this.m_itemsToDelete.Add(mapper, item);
+        }
+
+        private HashBag<EntityMapper, object> m_itemsToDelete;
+        private void EnsureItemsToDeleteCreated()
+        {
+            if (this.m_itemsToDelete == null)
+            {
+                this.m_itemsToDelete = new HashBag<EntityMapper, object>();
+            }
+        }
+
+        private void DeleteEntities()
+        {
+            if (this.m_itemsToDelete == null) return;
+
+            foreach (var mapper in this.m_itemsToDelete.Keys)
+            {
+                foreach (var entity in this.m_itemsToDelete[mapper])
+                {
+                    var identityDoc = mapper.GetIdentity(entity);
+                    var coll = mapper.GetCollection(this.m_database);
+                    coll.Delete(identityDoc);
+
+                    this.m_stateLoaded.Remove(entity);
+                }
+            }
+
+            this.m_itemsToDelete = null;
         }
 
         public void SubmitChanges()
         {
             this.m_database.Open();
 
-            this.UpdateEntityState();
+            this.DeleteEntities();
 
-            this.SaveEntityAdded();
+            this.UpdateEntites();
+
+            this.InsertEntities();
         }
 
-        private void SaveEntityAdded()
+        private void InsertEntities()
         {
-            if (this.m_itemAdded == null) return;
+            if (this.m_itemsToInsert == null) return;
 
-            foreach (var mapper in this.m_itemAdded.Keys.ToList())
+            foreach (var mapper in this.m_itemsToInsert.Keys.ToList())
             {
-                var entitiesToAdd = this.m_itemAdded[mapper];
+                var entitiesToAdd = this.m_itemsToInsert[mapper];
                 var documents = entitiesToAdd.Select(mapper.GetDocument);
 
-                mapper.GetCollection(this.m_database).Insert(documents);
+                var coll = mapper.GetCollection(this.m_database);
+                coll.Insert(documents);
 
                 foreach (var entity in entitiesToAdd)
                 {
                     this.TrackEntityState(mapper, entity);
                 }
 
-                this.m_itemAdded.RemoveAll(mapper);
+                this.m_itemsToInsert.RemoveAll(mapper);
             }
 
-            this.m_itemAdded = null;
+            this.m_itemsToInsert = null;
         }
 
-        private void UpdateEntityState()
+        private void UpdateEntites()
         {
             if (this.m_stateLoaded == null) return;
-
-            this.m_database.Open();
 
             foreach (var pair in this.m_stateLoaded.ToList())
             {
@@ -171,15 +222,6 @@ namespace EasyMongo
             }
         }
 
-        private Dictionary<object, EntityState> m_stateLoaded;
-        private void EnsureStateLoadedCreated()
-        {
-            if (this.m_stateLoaded == null)
-            {
-                this.m_stateLoaded = new Dictionary<object, EntityState>();
-            }
-        }
-
         private void TrackEntityState(EntityMapper mapper, object entity)
         {
             if (!this.EntityTrackingEnabled) return;
@@ -189,8 +231,10 @@ namespace EasyMongo
             this.m_stateLoaded.Add(entity, state);
         }
 
-        public void Attach<T>(T entity)
+        public void Attach<T>(T entity) where T : class
         {
+            if (entity == null) throw new ArgumentNullException();
+
             var mapper = this.m_mappingSource.GetEntityMapper<T>();
             this.TrackEntityState(mapper, entity);
         }

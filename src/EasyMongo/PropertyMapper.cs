@@ -11,18 +11,38 @@ namespace EasyMongo
 {
     internal class PropertyMapper
     {
-        public PropertyMapper(IPropertyDescriptor descriptor)
+        public PropertyMapper(IPropertyDescriptor descriptor, bool isDefaultIdentity)
         {
             this.Descriptor = descriptor;
+            this.IsDefaultIdentity = isDefaultIdentity;
         }
         
         public IPropertyDescriptor Descriptor { get; private set; }
 
-        public bool IsReadOnly { get { return this.Descriptor.ChangeWithProperties.Count > 0; } }
+        public bool IsDefaultIdentity { get; private set; }
+
+        public string DatabaseName
+        {
+            get
+            {
+                if (this.IsDefaultIdentity) return "_id";
+
+                return this.Descriptor.Name;
+            }
+        }
+
+        public bool IsReadOnly
+        {
+            get
+            {
+                var descriptor = this.Descriptor;
+                return descriptor.IsIdentity || descriptor.ChangeWithProperties.Count > 0;
+            }
+        }
 
         public void PutEqualPredicate(Document doc, object value)
         {
-            var name = this.Descriptor.Name;
+            var name = this.DatabaseName;
             if (doc.Contains(name))
             {
                 throw new InvalidOperationException(
@@ -40,7 +60,7 @@ namespace EasyMongo
 
         private void PutInnerPredicate(Document doc, string op, object value)
         {
-            var name = this.Descriptor.Name;
+            var name = this.DatabaseName;
             Document innerDoc;
 
             if (doc.Contains(name))
@@ -77,7 +97,7 @@ namespace EasyMongo
 
         public void PutContainsPredicate(Document doc, object value)
         {
-            doc.Append(this.Descriptor.Name, value);
+            doc.Append(this.DatabaseName, value);
         }
 
         public void PutValue(Document target, object sourceEntity)
@@ -108,17 +128,21 @@ namespace EasyMongo
                 docValue = value;
             }
 
-            target.Append(this.Descriptor.Name, docValue);
+            target.Append(this.DatabaseName, docValue);
         }
 
         public void PutField(Document doc, bool include)
         {
-            doc.Append(this.Descriptor.Name, include ? 1 : 0);
+            var name = this.DatabaseName;
+            if (!doc.Contains(name))
+            {
+                doc.Append(name, include ? 1 : 0);
+            }
         }
 
         public void PutState(Dictionary<IPropertyDescriptor, object> targetState, object sourceEntity)
         {
-            var name = this.Descriptor.Name;
+            var name = this.DatabaseName;
             var property = this.Descriptor.Property;
             var type = property.PropertyType;
 
@@ -133,7 +157,7 @@ namespace EasyMongo
 
         public void SetValue(object targetEntity, Document sourceDoc)
         {
-            var name = this.Descriptor.Name;
+            var name = this.DatabaseName;
 
             object docValue;
             if (sourceDoc.Contains(name))
@@ -207,7 +231,7 @@ namespace EasyMongo
             Dictionary<IPropertyDescriptor, object> originalState,
             Dictionary<IPropertyDescriptor, object> currentState)
         {
-            var name = this.Descriptor.Name;
+            var name = this.DatabaseName;
             var property = this.Descriptor.Property;
             var type = property.PropertyType;
 
@@ -276,7 +300,7 @@ namespace EasyMongo
             Dictionary<IPropertyDescriptor, object> originalState,
             Dictionary<IPropertyDescriptor, object> currentState)
         {
-            var name = this.Descriptor.Name;
+            var name = this.DatabaseName;
             var property = this.Descriptor.Property;
             var type = property.PropertyType;
 
@@ -361,12 +385,12 @@ namespace EasyMongo
                 doc.Append(op, innerDoc);
             }
 
-            innerDoc.Append(this.Descriptor.Name, value);
+            innerDoc.Append(this.DatabaseName, value);
         }
 
         public void PutSortOrder(Document doc, bool descending)
         {
-            doc.Append(this.Descriptor.Name, descending ? -1 : 1);
+            doc.Append(this.DatabaseName, descending ? -1 : 1);
         }
     }
 }

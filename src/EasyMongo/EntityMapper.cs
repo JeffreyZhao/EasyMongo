@@ -13,15 +13,26 @@ namespace EasyMongo
         public EntityMapper(IEntityDescriptor descriptor)
         {
             this.Descriptor = descriptor;
-            this.m_properties = descriptor.Properties.ToDictionary(
-                p => p.Property,
-                p => new PropertyMapper(p));
 
-            this.m_identityMapper = this.m_properties.Values.Single(m => m.Descriptor.IsIdentity);
+            var identityCount = descriptor.Properties.Count(d => d.IsIdentity);
+            if (identityCount <= 0)
+            {
+                throw new Exception();
+            }
+            else
+            {
+                this.m_properties = descriptor.Properties.ToDictionary(
+                    d => d.Property,
+                    d => new PropertyMapper(d, d.IsIdentity ? (identityCount == 1) : false));
+            }
+
+            this.m_identities = this.m_properties.Values
+                .Where(m => m.Descriptor.IsIdentity)
+                .ToDictionary(p => p.Descriptor.Property);
         }
 
         private Dictionary<PropertyInfo, PropertyMapper> m_properties;
-        private PropertyMapper m_identityMapper;
+        private Dictionary<PropertyInfo, PropertyMapper> m_identities;
 
         public IEntityDescriptor Descriptor { get; private set; }
 
@@ -65,6 +76,11 @@ namespace EasyMongo
                 {
                     mapper.PutField(doc, true);
                 }
+
+                foreach (var mapper in this.m_identities.Values)
+                {
+                    mapper.PutField(doc, true);
+                }
             }
             else
             {
@@ -78,7 +94,17 @@ namespace EasyMongo
                     var propExpr = (MemberExpression)lambdaExpr.Body;
                     var propInfo = (PropertyInfo)propExpr.Member;
 
+                    if (!include && this.m_identities.ContainsKey(propInfo)) continue;
+
                     this.m_properties[propInfo].PutField(doc, include);
+                }
+
+                if (include)
+                {
+                    foreach (var mapper in this.m_identities.Values)
+                    {
+                        mapper.PutField(doc, true);
+                    }
                 }
             }
 
@@ -99,7 +125,12 @@ namespace EasyMongo
         public Document GetIdentity(object entity)
         { 
             var doc = new Document();
-            this.m_identityMapper.PutValue(doc, entity);
+
+            foreach (var mapper in this.m_identities.Values)
+            {
+                mapper.PutValue(doc, entity);
+            }
+
             return doc;
         }
 
@@ -107,6 +138,11 @@ namespace EasyMongo
         {
             var entity = Activator.CreateInstance(this.Descriptor.Type);
             foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
+            {
+                mapper.SetValue(entity, doc);
+            }
+
+            foreach (var mapper in this.m_identities.Values)
             {
                 mapper.SetValue(entity, doc);
             }

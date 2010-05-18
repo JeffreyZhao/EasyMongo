@@ -37,6 +37,17 @@ namespace EasyMongo.Collections
             return this.m_container.Remove(key);
         }
 
+        public bool Remove(TKey key, TValue value)
+        {
+            HashSet<TValue> set;
+            if (!this.m_container.TryGetValue(key, out set))
+            {
+                return false;
+            }
+
+            return set.Remove(value);
+        }
+
         public IEnumerable<TKey> Keys
         {
             get
