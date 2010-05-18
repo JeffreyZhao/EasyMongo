@@ -243,5 +243,15 @@ namespace EasyMongo
         {
             this.m_database.Dispose();
         }
+
+        public void Delete<T>(Expression<Func<T, bool>> predicate)
+        {
+            var mapper = this.m_mappingSource.GetEntityMapper<T>();
+            var predicateDoc = mapper.GetPredicate(predicate.Body);
+
+            this.m_database.Open();
+            var coll = mapper.GetCollection(this.m_database);
+            coll.Delete(predicateDoc);
+        }
     }
 }
