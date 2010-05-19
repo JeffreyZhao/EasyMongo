@@ -253,5 +253,19 @@ namespace EasyMongo
             var coll = mapper.GetCollection(this.m_database);
             coll.Delete(predicateDoc);
         }
+
+        public void Update<T>(
+            Expression<Func<T, T>> updateSpec,
+            Expression<Func<T, bool>> predicate)
+        {
+            var mapper = this.m_mappingSource.GetEntityMapper<T>();
+            var updateDoc = mapper.GetUpdate(updateSpec.Body);
+            var predicateDoc = mapper.GetPredicate(predicate.Body);
+
+            this.m_database.Open();
+            var coll = mapper.GetCollection(this.m_database);
+
+            coll.UpdateAll(updateDoc, predicateDoc);
+        }
     }
 }

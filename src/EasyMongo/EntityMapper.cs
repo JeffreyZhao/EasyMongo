@@ -175,7 +175,7 @@ namespace EasyMongo
             return result;
         }
 
-        public  Document GetSortOrders(List<SortOrder> sortOrders)
+        public Document GetSortOrders(List<SortOrder> sortOrders)
         {
             Document result = new Document();
 
@@ -187,6 +187,20 @@ namespace EasyMongo
             }
 
             return result;
+        }
+
+        public Document GetUpdate(Expression updateExpr)
+        {
+            var propUpdates = new UpdateCollector().Collect(updateExpr);
+
+            var updateDoc = new Document();
+            foreach (var update in propUpdates)
+            {
+                var propertyMapper = this.m_properties[update.Property];
+                update.Fill(propertyMapper, updateDoc);
+            }
+
+            return updateDoc;
         }
     }
 }

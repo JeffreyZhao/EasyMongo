@@ -36,7 +36,7 @@ namespace EasyMongo.Test.Mapping
             var descriptor = map.ToDescriptor();
 
             Assert.Equal(typeof(TestEntity).GetProperty("TestProperty"), descriptor.Property);
-            Assert.Equal("_id", descriptor.Name);
+            Assert.Equal("TestProperty", descriptor.Name);
             Assert.Equal(true, descriptor.IsIdentity);
             Assert.Equal(false, descriptor.HasDefaultValue);
             Assert.Equal(0, descriptor.DefaultValue);

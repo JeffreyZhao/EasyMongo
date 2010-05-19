@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace EasyMongo
 {
-    internal class PropertyMapper
+    internal class PropertyMapper : IPropertyUpdateOperator
     {
         public PropertyMapper(IPropertyDescriptor descriptor, bool isDefaultIdentity)
         {
@@ -294,7 +294,6 @@ namespace EasyMongo
             this.PutValue(innerDoc, sourceEntity);
         }
 
-
         public void PutStateChange(
             Document targetDoc,
             Dictionary<IPropertyDescriptor, object> originalState,
@@ -391,6 +390,58 @@ namespace EasyMongo
         public void PutSortOrder(Document doc, bool descending)
         {
             doc.Append(this.DatabaseName, descending ? -1 : 1);
+        }
+
+        private object EntityValueToDocValue(object entityValue)
+        {
+            var name = this.DatabaseName;
+            var property = this.Descriptor.Property;
+            var type = property.PropertyType;
+
+            if (typeof(IList).IsAssignableFrom(type))
+            {
+                return ((IEnumerable)entityValue).Cast<object>().ToArray();
+            }
+            else if (type.IsEnum)
+            {
+                if (type.IsDefined(typeof(FlagsAttribute), false))
+                {
+                    return entityValue.ToString().Split(new[] { ", " }, StringSplitOptions.None);
+                }
+                else
+                {
+                    return entityValue.ToString();
+                }
+            }
+            else
+            {
+                return entityValue;
+            }
+        }
+
+        void IPropertyUpdateOperator.PutConstantUpdate(Document doc, object value)
+        {
+            this.AppendOperation(doc, "$set", EntityValueToDocValue(value));
+        }
+
+        private void PutAddUpdate(Document doc, object value)
+        {
+            this.AppendOperation(doc, "$inc", EntityValueToDocValue(value));
+        }
+
+        void IPropertyUpdateOperator.PutAddUpdate(Document doc, object value)
+        {
+            this.PutAddUpdate(doc, value);
+        }
+
+        void IPropertyUpdateOperator.PutSubtractUpdate(Document doc, object value)
+        {
+            this.PutAddUpdate(doc, -(int)value);
+        }
+
+        void IPropertyUpdateOperator.PutPushUpdate(Document doc, IEnumerable<object> values)
+        {
+            this.AppendOperation(doc, "$push", EntityValueToDocValue(values));
         }
     }
 }

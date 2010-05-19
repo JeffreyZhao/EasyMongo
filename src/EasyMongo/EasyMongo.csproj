@@ -44,8 +44,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArrayState.cs" />
+    <Compile Include="BinaryUpdate.cs" />
     <Compile Include="BinaryPredicate.cs" />
     <Compile Include="Collections\HashBag.cs" />
+    <Compile Include="ConstantUpdate.cs" />
     <Compile Include="DataContext.cs" />
     <Compile Include="EntityMapper.cs" />
     <Compile Include="EntityState.cs" />
@@ -53,7 +55,10 @@
     <Compile Include="Expressions\ExpressionVisitor.cs" />
     <Compile Include="Expressions\PartialEvaluator.cs" />
     <Compile Include="IMongoDatabase.cs" />
+    <Compile Include="IPropertyUpdate.cs" />
+    <Compile Include="IPropertyUpdateOperator.cs" />
     <Compile Include="MethodCallPredicate.cs" />
+    <Compile Include="MethodCallUpdate.cs" />
     <Compile Include="PartialExtensions.cs" />
     <Compile Include="PredicateCollector.cs" />
     <Compile Include="IArray.cs" />
@@ -72,6 +77,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyMapper.cs" />
     <Compile Include="Query.cs" />
+    <Compile Include="UpdateExtensions.cs" />
+    <Compile Include="UpdateCollector.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

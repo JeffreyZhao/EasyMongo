@@ -16,6 +16,7 @@ namespace EasyMongo.Expressions
             var lambdaExpr =
                 Expression.Lambda<Func<object>>(
                     Expression.Convert(expr, typeof(object)));
+
             var func = lambdaExpr.Compile();
             return func();
         }

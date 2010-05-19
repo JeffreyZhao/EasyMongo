@@ -51,11 +51,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryUpdateTest.cs" />
     <Compile Include="DataContextTest.cs" />
+    <Compile Include="MethodCallUpdateTest.cs" />
     <Compile Include="PredicateCollectorTest.cs" />
     <Compile Include="Mapping\PropertyMapTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyMapperTest.cs" />
+    <Compile Include="UpdateCollectorTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\EasyMongo\EasyMongo.csproj">
