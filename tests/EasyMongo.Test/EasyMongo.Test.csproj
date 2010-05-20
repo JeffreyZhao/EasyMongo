@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="BinaryUpdateTest.cs" />
     <Compile Include="DataContextTest.cs" />
+    <Compile Include="MethodCallPredicateTest.cs" />
     <Compile Include="MethodCallUpdateTest.cs" />
     <Compile Include="PredicateCollectorTest.cs" />
     <Compile Include="Mapping\PropertyMapTest.cs" />

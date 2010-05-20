@@ -75,6 +75,7 @@
     <Compile Include="Mapping\PropertyMap.cs" />
     <Compile Include="Mapping\IPropertyMap.cs" />
     <Compile Include="MongoDatabase.cs" />
+    <Compile Include="PredicateExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyMapper.cs" />
     <Compile Include="UpdateExtensions.cs" />

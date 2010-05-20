@@ -97,7 +97,12 @@ namespace EasyMongo
 
         public void PutContainsPredicate(Document doc, object value)
         {
-            doc.Append(this.DatabaseName, value);
+            doc.Append(this.DatabaseName, EntityValueToDocValue(value));
+        }
+
+        public void PutContainedInPredicate(Document doc, IEnumerable<object> value)
+        {
+            doc.Append(this.DatabaseName, new Document().Append("$in", value.ToArray()));
         }
 
         public void PutValue(Document target, object sourceEntity)
