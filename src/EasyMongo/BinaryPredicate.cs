@@ -14,8 +14,24 @@ namespace EasyMongo
         public BinaryPredicate(BinaryExpression expr)
         {
             this.Property = GetProperty(expr.Left);
-            this.Constant = expr.Right.Eval();
+            this.Constant = GetConstant(this.Property.PropertyType, expr.Right);
+
+            if (this.Property.PropertyType.IsEnum && !(this.Constant is Enum))
+            {
+                this.Constant = Enum.GetName(this.Property.PropertyType, this.Constant);
+            }
+
             this.OpType = GetSupportedOpType(expr.NodeType);
+        }
+
+        private static object GetConstant(Type propertyType, Expression expr)
+        {
+            var value = expr.Eval();
+            if (!propertyType.IsEnum) return value;
+            if (value is Enum) return value;
+
+            var name = Enum.GetName(propertyType, value);
+            return Enum.Parse(propertyType, name);
         }
 
         private static PropertyInfo GetProperty(Expression expr)

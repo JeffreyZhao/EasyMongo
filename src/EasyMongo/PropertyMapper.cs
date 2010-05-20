@@ -404,11 +404,6 @@ namespace EasyMongo
             }
             else if (type.IsEnum)
             {
-                if (!(entityValue is Enum))
-                {
-                    entityValue = Enum.GetName(type, entityValue);
-                }
-
                 if (type.IsDefined(typeof(FlagsAttribute), false))
                 {
                     return entityValue.ToString().Split(new[] { ", " }, StringSplitOptions.None);
