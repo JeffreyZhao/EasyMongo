@@ -19,9 +19,9 @@ namespace EasyMongo
         public bool Descending { get; set; }
     }
 
-    public class Query<T> where T : class
+    public class MongoQuery<T> where T : class
     {
-        internal Query(DataContext db)
+        internal MongoQuery(DataContext db)
         {
             this.m_db = db;
         }
@@ -34,7 +34,7 @@ namespace EasyMongo
 
         private List<SortOrder> m_sortOrders = new List<SortOrder>();
 
-        public Query<T> Where(Expression<Func<T, bool>> predicate)
+        public MongoQuery<T> Where(Expression<Func<T, bool>> predicate)
         {
             if (this.m_predicate == null)
             {
@@ -48,35 +48,35 @@ namespace EasyMongo
             return this;
         }
 
-        public Query<T> Skip(int n)
+        public MongoQuery<T> Skip(int n)
         {
             this.m_skip = n;
             return this;
         }
 
-        public Query<T> Take(int n)
+        public MongoQuery<T> Take(int n)
         {
             this.m_limit = n;
             return this;
         }
 
-        public Query<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelector)
+        public MongoQuery<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelector)
         {
             return this.OrderBy(keySelector, false);
         }
 
-        public Query<T> OrderByDescending<TKey>(Expression<Func<T, TKey>> keySelector)
+        public MongoQuery<T> OrderByDescending<TKey>(Expression<Func<T, TKey>> keySelector)
         {
             return this.OrderBy(keySelector, true);
         }
 
-        private Query<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelector, bool desc)
+        public MongoQuery<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelector, bool desc)
         {
-            this.m_sortOrders.Add(new SortOrder(keySelector, desc));
+            this.m_sortOrders.Add(new SortOrder(keySelector.Body, desc));
             return this;
         }
 
-        public Query<T> Select(Expression<Func<T, T>> selector)
+        public MongoQuery<T> Select(Expression<Func<T, T>> selector)
         {
             this.m_selector = selector.Body;
             return this;

@@ -50,7 +50,7 @@ namespace EasyMongo
                         "this document should not contain {0} field.", name));
             }
 
-            doc.Append(name, value);
+            doc.Append(name, EntityValueToDocValue(value));
         }
 
         public void PutGreaterThanPredicate(Document doc, object value)
@@ -404,6 +404,11 @@ namespace EasyMongo
             }
             else if (type.IsEnum)
             {
+                if (!(entityValue is Enum))
+                {
+                    entityValue = Enum.GetName(type, entityValue);
+                }
+
                 if (type.IsDefined(typeof(FlagsAttribute), false))
                 {
                     return entityValue.ToString().Split(new[] { ", " }, StringSplitOptions.None);

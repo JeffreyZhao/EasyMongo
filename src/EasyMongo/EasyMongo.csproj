@@ -59,6 +59,7 @@
     <Compile Include="IPropertyUpdateOperator.cs" />
     <Compile Include="MethodCallPredicate.cs" />
     <Compile Include="MethodCallUpdate.cs" />
+    <Compile Include="MongoQuery.cs" />
     <Compile Include="PartialExtensions.cs" />
     <Compile Include="PredicateCollector.cs" />
     <Compile Include="IArray.cs" />
@@ -76,7 +77,6 @@
     <Compile Include="MongoDatabase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyMapper.cs" />
-    <Compile Include="Query.cs" />
     <Compile Include="UpdateExtensions.cs" />
     <Compile Include="UpdateCollector.cs" />
   </ItemGroup>

@@ -52,14 +52,14 @@ namespace EasyMongo
             return (T)entity;
         }
 
-        public Query<T> Query<T>(Expression<Func<T, bool>> predicate) where T : class
+        public MongoQuery<T> Query<T>(Expression<Func<T, bool>> predicate) where T : class
         {
             return this.Query<T>().Where(predicate);
         }
 
-        public Query<T> Query<T>() where T : class
+        public MongoQuery<T> Query<T>() where T : class
         {
-            return new Query<T>(this);
+            return new MongoQuery<T>(this);
         }
 
         internal List<T> List<T>(Expression predicate, int skip, int? limit, List<SortOrder> sortOrders, Expression selector) where T : class
@@ -103,6 +103,8 @@ namespace EasyMongo
         {
             var mapper = this.m_mappingSource.GetEntityMapper<T>();
             var predicateDoc = mapper.GetPredicate(predicate);
+
+            this.m_database.Open();
             var coll = mapper.GetCollection(this.m_database);
             return (int)coll.Count(predicateDoc);
         }

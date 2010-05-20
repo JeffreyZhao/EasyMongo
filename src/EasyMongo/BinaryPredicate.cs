@@ -20,6 +20,12 @@ namespace EasyMongo
 
         private static PropertyInfo GetProperty(Expression expr)
         {
+            // enum comparison need to convert first
+            if (expr.NodeType == ExpressionType.Convert)
+            {
+                expr = ((UnaryExpression)expr).Operand;
+            }
+
             var memberExpr = expr as MemberExpression;
             if (memberExpr == null) throw new ArgumentException(expr + " is not a property.");
 
