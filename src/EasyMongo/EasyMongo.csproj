@@ -55,6 +55,7 @@
     <Compile Include="Expressions\ExpressionVisitor.cs" />
     <Compile Include="Expressions\PartialEvaluator.cs" />
     <Compile Include="IMongoDatabase.cs" />
+    <Compile Include="IPropertyPredicateOperator.cs" />
     <Compile Include="IPropertyUpdate.cs" />
     <Compile Include="IPropertyUpdateOperator.cs" />
     <Compile Include="MethodCallPredicate.cs" />

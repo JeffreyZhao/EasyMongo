@@ -69,15 +69,15 @@ namespace EasyMongo
         public PropertyInfo Property { get; private set; }
         public object Constant { get; private set; }
 
-        public void Fill(PropertyMapper mapper, Document doc)
+        public void Fill(IPropertyPredicateOperator optr, Document doc)
         {
             switch (this.Method.Name)
             { 
                 case "Contains":
-                    mapper.PutContainsPredicate(doc, this.Constant);
+                    optr.PutContainsPredicate(doc, this.Constant);
                     break;
                 case "ContainedIn":
-                    mapper.PutContainedInPredicate(doc, (IEnumerable<object>)this.Constant);
+                    optr.PutContainedInPredicate(doc, (IEnumerable<object>)this.Constant);
                     break;
             }
         }

@@ -70,25 +70,25 @@ namespace EasyMongo
         public PropertyInfo Property { get; private set; }
         public object Constant { get; private set; }
         public ExpressionType OpType { get; private set; }
-        
-        public void Fill(PropertyMapper mapper, Document doc)
+
+        public void Fill(IPropertyPredicateOperator optr, Document doc)
         {
             switch (this.OpType)
             {
                 case ExpressionType.Equal:
-                    mapper.PutEqualPredicate(doc, this.Constant);
+                    optr.PutEqualPredicate(doc, this.Constant);
                     break;
                 case ExpressionType.GreaterThan:
-                    mapper.PutGreaterThanPredicate(doc, this.Constant);
+                    optr.PutGreaterThanPredicate(doc, this.Constant);
                     break;
                 case ExpressionType.GreaterThanOrEqual:
-                    mapper.PutGreaterThanOrEqualPredicate(doc, this.Constant);
+                    optr.PutGreaterThanOrEqualPredicate(doc, this.Constant);
                     break;
                 case ExpressionType.LessThan:
-                    mapper.PutLessThanPredicate(doc, this.Constant);
+                    optr.PutLessThanPredicate(doc, this.Constant);
                     break;
                 case ExpressionType.LessThanOrEqual:
-                    mapper.PutLessThanOrEqualPredicate(doc, this.Constant);
+                    optr.PutLessThanOrEqualPredicate(doc, this.Constant);
                     break;
                 default:
                     throw new NotSupportedException();

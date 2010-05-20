@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace EasyMongo
 {
-    internal class PropertyMapper : IPropertyUpdateOperator
+    internal class PropertyMapper : IPropertyUpdateOperator, IPropertyPredicateOperator
     {
         public PropertyMapper(IPropertyDescriptor descriptor, bool isDefaultIdentity)
         {
@@ -40,24 +40,6 @@ namespace EasyMongo
             }
         }
 
-        public void PutEqualPredicate(Document doc, object value)
-        {
-            var name = this.DatabaseName;
-            if (doc.Contains(name))
-            {
-                throw new InvalidOperationException(
-                    String.Format(
-                        "this document should not contain {0} field.", name));
-            }
-
-            doc.Append(name, EntityValueToDocValue(value));
-        }
-
-        public void PutGreaterThanPredicate(Document doc, object value)
-        {
-            this.PutInnerPredicate(doc, "$gt", value);
-        }
-
         private void PutInnerPredicate(Document doc, string op, object value)
         {
             var name = this.DatabaseName;
@@ -78,31 +60,6 @@ namespace EasyMongo
             }
 
             innerDoc.Append(op, value);
-        }
-
-        public void PutGreaterThanOrEqualPredicate(Document doc, object value)
-        {
-            this.PutInnerPredicate(doc, "$gte", value);
-        }
-
-        public void PutLessThanPredicate(Document doc, object value)
-        {
-            this.PutInnerPredicate(doc, "$lt", value);
-        }
-
-        public void PutLessThanOrEqualPredicate(Document doc, object value)
-        {
-            this.PutInnerPredicate(doc, "$lte", value);
-        }
-
-        public void PutContainsPredicate(Document doc, object value)
-        {
-            doc.Append(this.DatabaseName, EntityValueToDocValue(value));
-        }
-
-        public void PutContainedInPredicate(Document doc, IEnumerable<object> value)
-        {
-            doc.Append(this.DatabaseName, new Document().Append("$in", value.ToArray()));
         }
 
         public void PutValue(Document target, object sourceEntity)
@@ -424,29 +381,75 @@ namespace EasyMongo
             }
         }
 
+        #region IPropertyUpdateOperator members
+
+        void IPropertyPredicateOperator.PutEqualPredicate(Document doc, object value)
+        {
+            var name = this.DatabaseName;
+            if (doc.Contains(name))
+            {
+                throw new InvalidOperationException(
+                    String.Format(
+                        "this document should not contain {0} field.", name));
+            }
+
+            doc.Append(name, EntityValueToDocValue(value));
+        }
+
+        void IPropertyPredicateOperator.PutGreaterThanPredicate(Document doc, object value)
+        {
+            this.PutInnerPredicate(doc, "$gt", value);
+        }
+
+        void IPropertyPredicateOperator.PutGreaterThanOrEqualPredicate(Document doc, object value)
+        {
+            this.PutInnerPredicate(doc, "$gte", value);
+        }
+
+        void IPropertyPredicateOperator.PutLessThanPredicate(Document doc, object value)
+        {
+            this.PutInnerPredicate(doc, "$lt", value);
+        }
+
+        void IPropertyPredicateOperator.PutLessThanOrEqualPredicate(Document doc, object value)
+        {
+            this.PutInnerPredicate(doc, "$lte", value);
+        }
+
+        void IPropertyPredicateOperator.PutContainsPredicate(Document doc, object value)
+        {
+            doc.Append(this.DatabaseName, EntityValueToDocValue(value));
+        }
+
+        void IPropertyPredicateOperator.PutContainedInPredicate(Document doc, IEnumerable<object> value)
+        {
+            doc.Append(this.DatabaseName, new Document().Append("$in", value.ToArray()));
+        }
+
+        #endregion
+
+        #region IPropertyUpdateOperator members
+
         void IPropertyUpdateOperator.PutConstantUpdate(Document doc, object value)
         {
             this.AppendOperation(doc, "$set", EntityValueToDocValue(value));
         }
 
-        private void PutAddUpdate(Document doc, object value)
+        void IPropertyUpdateOperator.PutAddUpdate(Document doc, object value)
         {
             this.AppendOperation(doc, "$inc", EntityValueToDocValue(value));
         }
 
-        void IPropertyUpdateOperator.PutAddUpdate(Document doc, object value)
-        {
-            this.PutAddUpdate(doc, value);
-        }
-
         void IPropertyUpdateOperator.PutSubtractUpdate(Document doc, object value)
         {
-            this.PutAddUpdate(doc, -(int)value);
+            ((IPropertyUpdateOperator)this).PutAddUpdate(doc, -(int)value);
         }
 
         void IPropertyUpdateOperator.PutPushUpdate(Document doc, IEnumerable<object> values)
         {
             this.AppendOperation(doc, "$push", EntityValueToDocValue(values));
         }
+
+        #endregion
     }
 }

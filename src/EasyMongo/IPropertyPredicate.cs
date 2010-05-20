@@ -11,6 +11,6 @@ namespace EasyMongo
     {
         PropertyInfo Property { get; }
 
-        void Fill(PropertyMapper mapper, Document doc);
+        void Fill(IPropertyPredicateOperator mapper, Document doc);
     }
 }

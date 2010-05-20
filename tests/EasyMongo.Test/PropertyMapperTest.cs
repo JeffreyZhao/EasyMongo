@@ -18,9 +18,9 @@ namespace EasyMongo.Test
             mockDescriptor.Setup(d => d.Name).Returns("Hello");
             mockDescriptor.Setup(d => d.Property).Returns(typeof(String).GetProperty("Length"));
 
-            var mapper = new PropertyMapper(mockDescriptor.Object, false);
+            IPropertyPredicateOperator optr = new PropertyMapper(mockDescriptor.Object, false);
             var doc = new Document();
-            mapper.PutEqualPredicate(doc, 20);
+            optr.PutEqualPredicate(doc, 20);
 
             Assert.Equal(1, doc.Count);
             Assert.Equal(20, doc["Hello"]);
@@ -32,10 +32,10 @@ namespace EasyMongo.Test
             var mockDescriptor = new Mock<IPropertyDescriptor>();
             mockDescriptor.Setup(d => d.Name).Returns("Hello");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object, false);
+            IPropertyPredicateOperator optr = new PropertyMapper(mockDescriptor.Object, false);
             var doc = new Document();
-            mapper.PutGreaterThanPredicate(doc, 10);
-            mapper.PutLessThanPredicate(doc, 20);
+            optr.PutGreaterThanPredicate(doc, 10);
+            optr.PutLessThanPredicate(doc, 20);
 
             Assert.Equal(1, doc.Count);
 
