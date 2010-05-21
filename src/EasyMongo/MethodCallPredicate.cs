@@ -16,7 +16,7 @@ namespace EasyMongo
         {
             this.Method = CheckSupportedMethod(expr.Method);
             this.Property = GetProperty(expr);
-            this.Constant = GetConstant(this.Property.PropertyType, expr);
+            this.Constants = GetConstants(this.Property.PropertyType, expr);
         }
 
         private static PropertyInfo GetProperty(MethodCallExpression expr)
@@ -32,34 +32,40 @@ namespace EasyMongo
             return property;
         }
 
-        private static object GetConstant(Type propertyType, MethodCallExpression expr)
+        private static object[] GetConstants(Type propertyType, MethodCallExpression expr)
         {
             var constantExprIndex = expr.Object == null ? 1 : 0;
             var value = expr.Arguments[constantExprIndex].Eval();
 
             if (expr.Method.Name == "Contains")
             {
-                if (!propertyType.IsEnum) return value;
-                if (value is Enum) return value;
+                if (!propertyType.IsEnum) return new[] { value };
+                if (value is Enum) return new[] { value };
 
                 var name = Enum.GetName(propertyType, value);
-                return Enum.Parse(propertyType, name);
+                return new[] { Enum.Parse(propertyType, name) };
             }
             else if (expr.Method.Name == "ContainedIn")
             {
-                return ((IEnumerable)value).Cast<object>();
+                return new[] { ((IEnumerable)value).Cast<object>() };
+            }
+            else if (expr.Method.Name == "Matches")
+            {
+                return new[] { value, expr.Arguments[constantExprIndex + 1].Eval() };
             }
             else
             {
-                throw new NotSupportedException("Only support Contains or ContainedIn method.");
+                throw new NotSupportedException(
+                    String.Format("{0} is not supported.", expr.Method.Name));
             }
         }
 
         private static MethodInfo CheckSupportedMethod(MethodInfo method)
         {
-            if (method.Name != "Contains" && method.Name != "ContainedIn")
+            if (method.Name != "Contains" && method.Name != "ContainedIn" && method.Name != "Matches")
             {
-                throw new NotSupportedException("Only support Contains or ContainedIn method.");
+                throw new NotSupportedException(
+                    String.Format("{0} is not supported.", method.Name));
             }
 
             return method;
@@ -67,17 +73,20 @@ namespace EasyMongo
 
         public MethodInfo Method { get; private set; }
         public PropertyInfo Property { get; private set; }
-        public object Constant { get; private set; }
+        public object[] Constants { get; private set; }
 
         public void Fill(IPropertyPredicateOperator optr, Document doc)
         {
             switch (this.Method.Name)
             { 
                 case "Contains":
-                    optr.PutContainsPredicate(doc, this.Constant);
+                    optr.PutContainsPredicate(doc, this.Constants[0]);
                     break;
                 case "ContainedIn":
-                    optr.PutContainedInPredicate(doc, (IEnumerable<object>)this.Constant);
+                    optr.PutContainedInPredicate(doc, (IEnumerable<object>)this.Constants[0]);
+                    break;
+                case "Matches":
+                    optr.PutRegexMatchPredicate(doc, (string)this.Constants[0], (string)this.Constants[1]);
                     break;
             }
         }

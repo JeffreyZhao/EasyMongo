@@ -224,7 +224,7 @@ namespace EasyMongo
             doc.Append(this.DatabaseName, value);
         }
 
-        void IPropertyPredicateOperator.PutContainedInPredicate(Document doc, IEnumerable<object> collections)
+        void IPropertyPredicateOperator.PutContainedInPredicate(Document doc, IEnumerable<object> collection)
         {
             var name = this.DatabaseName;
             if (doc.Contains(name))
@@ -234,8 +234,21 @@ namespace EasyMongo
                         "this document should not contain {0} field.", name));
             }
 
-            var array = collections.Select(this.TypeProcessor.ToDocumentValue).ToArray();
-            doc.Append(this.DatabaseName, new Document().Append("$in", array));
+            var array = collection.Select(this.TypeProcessor.ToDocumentValue).ToArray();
+            doc.Append(name, new Document().Append("$in", array));
+        }
+
+        void IPropertyPredicateOperator.PutRegexMatchPredicate(Document doc, string expression, string options)
+        {
+            var name = this.DatabaseName;
+            if (doc.Contains(name))
+            {
+                throw new InvalidOperationException(
+                    String.Format(
+                        "this document should not contain {0} field.", name));
+            }
+
+            doc.Append(name, new MongoRegex(expression, options));
         }
 
         #endregion
