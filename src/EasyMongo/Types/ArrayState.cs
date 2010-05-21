@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 
-namespace EasyMongo
+namespace EasyMongo.Types
 {
     internal class ArrayState
     {

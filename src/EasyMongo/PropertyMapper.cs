@@ -20,19 +20,19 @@ namespace EasyMongo
             var type = descriptor.Property.PropertyType;
             if (type.IsEnum)
             {
-                this.Type = new EnumType();
+                this.TypeProcessor = new EnumProcessor(descriptor.Property);
             }
             else if (typeof(IList).IsAssignableFrom(type))
             {
-                this.Type = new ArrayType();
+                this.TypeProcessor = new ArrayProcessor(descriptor.Property);
             }
             else
             {
-                this.Type = new NormalType();
+                this.TypeProcessor = new BasicProcessor();
             }
         }
 
-        public IType Type { get; private set; }
+        public ITypeProcessor TypeProcessor { get; private set; }
         
         public IPropertyDescriptor Descriptor { get; private set; }
 
@@ -57,20 +57,10 @@ namespace EasyMongo
             }
         }
 
-        private object ToDocumentValue(object value)
-        {
-            return this.Type.ToDocumentValue(this.Descriptor.Property, value);
-        }
-
-        private object FromDocumentValue(object value)
-        {
-            return this.Type.FromDocumentValue(this.Descriptor.Property, value);
-        }
-
         public void PutValue(Document target, object sourceEntity)
         {
             var value = this.Descriptor.Property.GetValue(sourceEntity, null);
-            target.Append(this.DatabaseName, this.ToDocumentValue(value));
+            target.Append(this.DatabaseName, this.TypeProcessor.ToDocumentValue(value));
         }
 
         public void PutField(Document doc, bool include)
@@ -84,17 +74,9 @@ namespace EasyMongo
 
         public void PutState(Dictionary<IPropertyDescriptor, object> targetState, object sourceEntity)
         {
-            var name = this.DatabaseName;
-            var property = this.Descriptor.Property;
-            var type = property.PropertyType;
-
-            object value = property.GetValue(sourceEntity, null);
-            if (typeof(IList).IsAssignableFrom(type) && value != null) // is array
-            {
-                value = new ArrayState((IList)value);
-            }
-
-            targetState.Add(this.Descriptor, value);
+            var value = this.Descriptor.Property.GetValue(sourceEntity, null);
+            var stateValue = this.TypeProcessor.ToStateValue(value);
+            targetState.Add(this.Descriptor, stateValue);
         }
 
         public void SetValue(object targetEntity, Document sourceDoc)
@@ -106,7 +88,7 @@ namespace EasyMongo
             {
                 var docValue = sourceDoc[name];
                 if (docValue == MongoDBNull.Value) docValue = null;
-                value = this.FromDocumentValue(docValue);
+                value = this.TypeProcessor.FromDocumentValue(docValue);
             }
             else if (this.Descriptor.HasDefaultValue)
             {
@@ -120,151 +102,46 @@ namespace EasyMongo
             this.Descriptor.Property.SetValue(targetEntity, value, null);
         }
 
-        public bool IsChanged(
+        public bool IsStateChanged(
             Dictionary<IPropertyDescriptor, object> originalState,
             Dictionary<IPropertyDescriptor, object> currentState)
         {
-            var name = this.DatabaseName;
-            var property = this.Descriptor.Property;
-            var type = property.PropertyType;
+            var original = originalState[this.Descriptor];
+            var current = currentState[this.Descriptor];
 
-            var originalValue = originalState[this.Descriptor];
-            var currentValue = currentState[this.Descriptor];
-
-            if (typeof(IList).IsAssignableFrom(type)) // is array
-            {
-                var originalArray = (ArrayState)originalValue;
-                var currentArray = (ArrayState)currentValue;
-
-                if (currentArray == null && originalArray != null)
-                {
-                    return true;
-                }
-                else if (currentArray != null && originalArray == null)
-                {
-                    return true;
-                }
-                else if (!Object.ReferenceEquals(originalArray.Container, currentArray.Container))
-                {
-                    return true;
-                }
-                else if (currentArray.Items.Count != originalArray.Items.Count)
-                {
-                    return true;
-                }
-                else
-                {
-                    for (int i = 0; i < currentArray.Items.Count; i++)
-                    {
-                        if (currentArray.Items[0] != originalArray.Items[0])
-                        {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
-            }
-            else
-            {
-                return !originalValue.Equals(currentValue);
-            }
+            return this.TypeProcessor.IsStateChanged(original, current);
         }
 
-        public void PutValueChange(Document targetDoc, object sourceEntity)
+        public void PutValueUpdate(Document targetDoc, object sourceEntity)
         {
-            Document innerDoc;
-            if (targetDoc.Contains("$set"))
-            {
-                innerDoc = (Document)targetDoc["$set"];
-            }
-            else
-            {
-                innerDoc = new Document();
-                innerDoc.Append("$set", innerDoc);
-            }
-
-            this.PutValue(innerDoc, sourceEntity);
+            var value = this.Descriptor.Property.GetValue(sourceEntity, null);
+            ((IPropertyUpdateOperator)this).PutConstantUpdate(targetDoc, value);
         }
 
-        public void PutStateChange(
+        public void PutStateUpdate(
             Document targetDoc,
             Dictionary<IPropertyDescriptor, object> originalState,
             Dictionary<IPropertyDescriptor, object> currentState)
         {
-            var name = this.DatabaseName;
-            var property = this.Descriptor.Property;
-            var type = property.PropertyType;
+            var original = originalState[this.Descriptor];
+            var current = currentState[this.Descriptor];
 
-            var originalValue = originalState[this.Descriptor];
-            var currentValue = currentState[this.Descriptor];
-
-            if (typeof(IList).IsAssignableFrom(type)) // is array
+            var arrayProcessor = this.TypeProcessor as IArrayProcessor;
+            if (arrayProcessor != null)
             {
-                var originalArray = (ArrayState)originalValue;
-                var currentArray = (ArrayState)currentValue;
-
-                if (currentArray == null && originalArray != null)
+                var itemsToPush = arrayProcessor.GetItemsToPush(original, current);
+                if (itemsToPush != null)
                 {
-                    this.AppendOperation(targetDoc, "$set", null);
-                }
-                else if (currentArray != null && originalArray == null)
-                {
-                    var value = currentArray.Items.ToArray();
-                    this.AppendOperation(targetDoc, "$set", value);
-                }
-                else if (!Object.ReferenceEquals(originalArray.Container, currentArray.Container))
-                {
-                    var value = currentArray.Items.ToArray();
-                    this.AppendOperation(targetDoc, "$set", value);
-                }
-                else if (originalArray.Items.Count > currentArray.Items.Count)
-                {
-                    throw new NotSupportedException("Does not support item removal in array.");
-                }
-                else
-                {
-                    for (var i = 0; i < originalArray.Items.Count; i++)
-                    {
-                        if (originalArray.Items[i] != currentArray.Items[i])
-                        {
-                            throw new NotSupportedException("Does not support item removal in array.");
-                        }
-                    }
-
-                    var itemAdded = currentArray.Items.Skip(originalArray.Items.Count).ToArray();
-
-                    if (itemAdded.Length > 0)
-                    {
-                        this.AppendOperation(targetDoc, "$pushAll", itemAdded);
-                    }
+                    this.AppendOperation(targetDoc, "$pushAll", itemsToPush);
+                    return;
                 }
             }
-            else if (!originalValue.Equals(currentValue))
-            {
-                object value;
 
-                if (type.IsEnum)
-                {
-                    if (type.IsDefined(typeof(FlagsAttribute), false))
-                    {
-                        value = currentValue.ToString().Split(new[] { ", " }, StringSplitOptions.None);
-                    }
-                    else
-                    {
-                        value = currentValue.ToString();
-                    }
-                }
-                else
-                {
-                    value = currentValue;
-                }
-
-                this.AppendOperation(targetDoc, "$set", value);
-            }
+            var value = this.TypeProcessor.FromStateValue(current);
+            ((IPropertyUpdateOperator)this).PutConstantUpdate(targetDoc, value);
         }
 
-        private void AppendOperation(Document doc, string op, object value)
+        private void AppendOperation(Document doc, string op, object docValue)
         {
             Document innerDoc;
             if (doc.Contains(op))
@@ -277,7 +154,7 @@ namespace EasyMongo
                 doc.Append(op, innerDoc);
             }
 
-            innerDoc.Append(this.DatabaseName, value);
+            innerDoc.Append(this.DatabaseName, docValue);
         }
 
         public void PutSortOrder(Document doc, bool descending)
@@ -285,7 +162,7 @@ namespace EasyMongo
             doc.Append(this.DatabaseName, descending ? -1 : 1);
         }
 
-        #region IPropertyUpdateOperator members
+        #region IPropertyPredicateOperator members
 
         void IPropertyPredicateOperator.PutEqualPredicate(Document doc, object value)
         {
@@ -297,7 +174,7 @@ namespace EasyMongo
                         "this document should not contain {0} field.", name));
             }
 
-            doc.Append(name, this.ToDocumentValue(value));
+            doc.Append(name, this.TypeProcessor.ToDocumentValue(value));
         }
 
         private void PutInnerPredicate(Document doc, string op, object value)
@@ -319,7 +196,7 @@ namespace EasyMongo
                 doc.Append(name, innerDoc);
             }
 
-            innerDoc.Append(op, this.ToDocumentValue(value));
+            innerDoc.Append(op, this.TypeProcessor.ToDocumentValue(value));
         }
 
         void IPropertyPredicateOperator.PutGreaterThanPredicate(Document doc, object value)
@@ -357,7 +234,7 @@ namespace EasyMongo
                         "this document should not contain {0} field.", name));
             }
 
-            var array = collections.Select(this.ToDocumentValue).ToArray();
+            var array = collections.Select(this.TypeProcessor.ToDocumentValue).ToArray();
             doc.Append(this.DatabaseName, new Document().Append("$in", array));
         }
 
@@ -367,12 +244,12 @@ namespace EasyMongo
 
         void IPropertyUpdateOperator.PutConstantUpdate(Document doc, object value)
         {
-            this.AppendOperation(doc, "$set", this.ToDocumentValue(value));
+            this.AppendOperation(doc, "$set", this.TypeProcessor.ToDocumentValue(value));
         }
 
         void IPropertyUpdateOperator.PutAddUpdate(Document doc, object value)
         {
-            this.AppendOperation(doc, "$inc", this.ToDocumentValue(value));
+            this.AppendOperation(doc, "$inc", this.TypeProcessor.ToDocumentValue(value));
         }
 
         void IPropertyUpdateOperator.PutSubtractUpdate(Document doc, object value)
@@ -382,7 +259,7 @@ namespace EasyMongo
 
         void IPropertyUpdateOperator.PutPushUpdate(Document doc, object value)
         {
-            this.AppendOperation(doc, "$push", this.ToDocumentValue(value));
+            this.AppendOperation(doc, "$push", this.TypeProcessor.ToDocumentValue(value));
         }
 
         #endregion

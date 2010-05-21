@@ -157,10 +157,10 @@ namespace EasyMongo
 
             foreach (var mapper in this.m_properties.Values.Where(p => !p.IsReadOnly))
             {
-                if (mapper.IsChanged(original, current))
+                if (mapper.IsStateChanged(original, current))
                 {
                     changedSet.Add(mapper.Descriptor.Property);
-                    mapper.PutStateChange(result, original, current);
+                    mapper.PutStateUpdate(result, original, current);
                 }
             }
 
@@ -168,7 +168,7 @@ namespace EasyMongo
             {
                 if (mapper.Descriptor.ChangeWithProperties.Any(p => changedSet.Contains(p)))
                 {
-                    mapper.PutValueChange(result, entity);
+                    mapper.PutValueUpdate(result, entity);
                 }
             }
 
