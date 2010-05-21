@@ -14,6 +14,6 @@ namespace EasyMongo
         void PutLessThanPredicate(Document doc, object value);
         void PutLessThanOrEqualPredicate(Document doc, object value);
         void PutContainsPredicate(Document doc, object value);
-        void PutContainedInPredicate(Document doc, IEnumerable<object> value);
+        void PutContainedInPredicate(Document doc, IEnumerable<object> collections);
     }
 }

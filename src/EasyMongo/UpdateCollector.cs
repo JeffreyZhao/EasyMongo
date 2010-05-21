@@ -12,14 +12,23 @@ namespace EasyMongo
     {
         public List<IPropertyUpdate> Collect(Expression expr)
         {
-            expr = new PartialEvaluator().Eval(expr);
-
             this.m_updates = new List<IPropertyUpdate>();
             this.Visit(expr);
             return this.m_updates;
         }
 
         private List<IPropertyUpdate> m_updates;
+        private PartialEvaluator m_partialEvaluator;
+
+        private Expression PartialEval(Expression expr)
+        {
+            if (this.m_partialEvaluator == null)
+            {
+                this.m_partialEvaluator = new PartialEvaluator();
+            }
+
+            return this.m_partialEvaluator.Eval(expr);
+        }
 
         protected override MemberAssignment VisitMemberAssignment(MemberAssignment assignment)
         {
@@ -31,7 +40,7 @@ namespace EasyMongo
             }
 
             IPropertyUpdate update;
-            var expr = assignment.Expression;
+            var expr = PartialEval(assignment.Expression);
             switch (expr.NodeType)
             {
                 case ExpressionType.Constant:

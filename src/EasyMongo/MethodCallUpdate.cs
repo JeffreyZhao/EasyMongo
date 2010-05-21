@@ -66,7 +66,7 @@ namespace EasyMongo
             switch (this.Method.Name)
             {
                 case "Push":
-                    optr.PutPushUpdate(doc, (IEnumerable<object>)this.Argument);
+                    optr.PutPushUpdate(doc, this.Argument);
                     break;
                 default:
                     throw new NotSupportedException();

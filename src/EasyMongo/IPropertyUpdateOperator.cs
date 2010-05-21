@@ -14,6 +14,6 @@ namespace EasyMongo
 
         void PutSubtractUpdate(Document doc, object value);
 
-        void PutPushUpdate(Document doc, IEnumerable<object> values);
+        void PutPushUpdate(Document doc, object value);
     }
 }

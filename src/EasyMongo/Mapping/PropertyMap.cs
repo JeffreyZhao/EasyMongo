@@ -16,14 +16,14 @@ namespace EasyMongo.Mapping
             this.m_name = null;
             this.m_isIdentity = false;
             this.m_hasDefaultValue = false;
-            this.m_defaultValue = default(TProperty);
+            this.m_defaultValueFactory = null;
             this.m_changeWithProperties = new List<PropertyInfo>();
         }
 
         private bool m_isIdentity;
         private string m_name;
         private bool m_hasDefaultValue;
-        private TProperty m_defaultValue;
+        private Func<object> m_defaultValueFactory;
         private List<PropertyInfo> m_changeWithProperties;
 
         public PropertyInfo Property { get; private set; }
@@ -43,7 +43,7 @@ namespace EasyMongo.Mapping
         public PropertyMap<TEntity, TProperty> DefaultValue(TProperty value)
         {
             this.m_hasDefaultValue = true;
-            this.m_defaultValue = value;
+            this.m_defaultValueFactory = () => value;
             return this;
         }
 
@@ -58,7 +58,7 @@ namespace EasyMongo.Mapping
             return new PropertyDescriptor
             {
                 IsIdentity = this.m_isIdentity,
-                DefaultValue = this.m_defaultValue,
+                DefaultValueFactory = this.m_defaultValueFactory,
                 HasDefaultValue = this.m_hasDefaultValue,
                 Name = this.m_name ?? this.Property.Name,
                 Property = this.Property,

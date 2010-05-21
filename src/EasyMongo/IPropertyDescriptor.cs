@@ -15,7 +15,7 @@ namespace EasyMongo
 
         bool HasDefaultValue { get; }
 
-        object DefaultValue { get; }
+        object GetDefaultValue();
 
         bool IsIdentity { get; }
 

@@ -79,6 +79,10 @@
     <Compile Include="PredicateExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyMapper.cs" />
+    <Compile Include="Types\ArrayType.cs" />
+    <Compile Include="Types\EnumType.cs" />
+    <Compile Include="Types\IType.cs" />
+    <Compile Include="Types\NormalType.cs" />
     <Compile Include="UpdateExtensions.cs" />
     <Compile Include="UpdateCollector.cs" />
   </ItemGroup>

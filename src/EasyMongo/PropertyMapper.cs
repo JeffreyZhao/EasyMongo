@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using System.Linq.Expressions;
 using System.Collections;
 using System.Reflection;
+using EasyMongo.Types;
 
 namespace EasyMongo
 {
@@ -15,7 +16,23 @@ namespace EasyMongo
         {
             this.Descriptor = descriptor;
             this.IsDefaultIdentity = isDefaultIdentity;
+
+            var type = descriptor.Property.PropertyType;
+            if (type.IsEnum)
+            {
+                this.Type = new EnumType();
+            }
+            else if (typeof(IList).IsAssignableFrom(type))
+            {
+                this.Type = new ArrayType();
+            }
+            else
+            {
+                this.Type = new NormalType();
+            }
         }
+
+        public IType Type { get; private set; }
         
         public IPropertyDescriptor Descriptor { get; private set; }
 
@@ -40,57 +57,20 @@ namespace EasyMongo
             }
         }
 
-        private void PutInnerPredicate(Document doc, string op, object value)
+        private object ToDocumentValue(object value)
         {
-            var name = this.DatabaseName;
-            Document innerDoc;
+            return this.Type.ToDocumentValue(this.Descriptor.Property, value);
+        }
 
-            if (doc.Contains(name))
-            {
-                innerDoc = doc[name] as Document;
-                if (innerDoc == null)
-                {
-                    throw new InvalidOperationException("Should have nothing or Document object");
-                }
-            }
-            else
-            {
-                innerDoc = new Document();
-                doc.Append(name, innerDoc);
-            }
-
-            innerDoc.Append(op, value);
+        private object FromDocumentValue(object value)
+        {
+            return this.Type.FromDocumentValue(this.Descriptor.Property, value);
         }
 
         public void PutValue(Document target, object sourceEntity)
         {
-            object docValue;
-
-            var property = this.Descriptor.Property;
-            var type = property.PropertyType;
-            var value = property.GetValue(sourceEntity, null);
-
-            if (typeof(IList).IsAssignableFrom(type))
-            {
-                docValue = value == null ? null : ((IList)value).Cast<object>().ToArray();
-            }
-            else if (type.IsEnum)
-            {
-                if (type.IsDefined(typeof(FlagsAttribute), false))
-                {
-                    docValue = value.ToString().Split(new[] { ", " }, StringSplitOptions.None);
-                }
-                else
-                {
-                    docValue = value.ToString();
-                }
-            }
-            else
-            {
-                docValue = value;
-            }
-
-            target.Append(this.DatabaseName, docValue);
+            var value = this.Descriptor.Property.GetValue(sourceEntity, null);
+            target.Append(this.DatabaseName, this.ToDocumentValue(value));
         }
 
         public void PutField(Document doc, bool include)
@@ -121,72 +101,23 @@ namespace EasyMongo
         {
             var name = this.DatabaseName;
 
-            object docValue;
+            object value;
             if (sourceDoc.Contains(name))
             {
-                docValue = sourceDoc[name];
+                var docValue = sourceDoc[name];
                 if (docValue == MongoDBNull.Value) docValue = null;
+                value = this.FromDocumentValue(docValue);
             }
             else if (this.Descriptor.HasDefaultValue)
             {
-                docValue = this.Descriptor.DefaultValue;
+                value = this.Descriptor.GetDefaultValue();
             }
             else
             {
                 throw new ArgumentException("Missing the value of " + name);
             }
 
-            var property = this.Descriptor.Property;
-            var type = property.PropertyType;
-            object value;
-
-            if (typeof(IList).IsAssignableFrom(type)) // is array
-            {
-                if (docValue == null)
-                {
-                    value = null;
-                }
-                else
-                {
-                    var list = (IList)Activator.CreateInstance(type);
-                    if (!(docValue is Document)) // not empty array
-                    {
-                        foreach (var item in ((IEnumerable)docValue)) list.Add(item);
-                    }
-
-                    value = list;
-                }
-            }
-            else if (type.IsEnum)
-            {
-                if (docValue == null)
-                {
-                    throw new ArgumentException("Enum value cannot be assigned to null for " + name);
-                }
-
-                if (type.IsDefined(typeof(FlagsAttribute), false))
-                {
-                    if (docValue is Document) // empty array;
-                    {
-                        value = Enum.Parse(type, "");
-                    }
-                    else
-                    {
-                        var array = ((IEnumerable)docValue).Cast<string>().ToArray();
-                        value = Enum.Parse(type, String.Join(", ", array));
-                    }
-                }
-                else
-                {
-                    value = Enum.Parse(type, docValue.ToString());
-                }
-            }
-            else
-            {
-                value = docValue;
-            }
-
-            property.SetValue(targetEntity, value, null);
+            this.Descriptor.Property.SetValue(targetEntity, value, null);
         }
 
         public bool IsChanged(
@@ -354,33 +285,6 @@ namespace EasyMongo
             doc.Append(this.DatabaseName, descending ? -1 : 1);
         }
 
-        private object EntityValueToDocValue(object entityValue)
-        {
-            var name = this.DatabaseName;
-            var property = this.Descriptor.Property;
-            var type = property.PropertyType;
-
-            if (typeof(IList).IsAssignableFrom(type))
-            {
-                return ((IEnumerable)entityValue).Cast<object>().ToArray();
-            }
-            else if (type.IsEnum)
-            {
-                if (type.IsDefined(typeof(FlagsAttribute), false))
-                {
-                    return entityValue.ToString().Split(new[] { ", " }, StringSplitOptions.None);
-                }
-                else
-                {
-                    return entityValue.ToString();
-                }
-            }
-            else
-            {
-                return entityValue;
-            }
-        }
-
         #region IPropertyUpdateOperator members
 
         void IPropertyPredicateOperator.PutEqualPredicate(Document doc, object value)
@@ -393,7 +297,29 @@ namespace EasyMongo
                         "this document should not contain {0} field.", name));
             }
 
-            doc.Append(name, EntityValueToDocValue(value));
+            doc.Append(name, this.ToDocumentValue(value));
+        }
+
+        private void PutInnerPredicate(Document doc, string op, object value)
+        {
+            var name = this.DatabaseName;
+            Document innerDoc;
+
+            if (doc.Contains(name))
+            {
+                innerDoc = doc[name] as Document;
+                if (innerDoc == null)
+                {
+                    throw new InvalidOperationException("Should have nothing or Document object");
+                }
+            }
+            else
+            {
+                innerDoc = new Document();
+                doc.Append(name, innerDoc);
+            }
+
+            innerDoc.Append(op, this.ToDocumentValue(value));
         }
 
         void IPropertyPredicateOperator.PutGreaterThanPredicate(Document doc, object value)
@@ -418,12 +344,21 @@ namespace EasyMongo
 
         void IPropertyPredicateOperator.PutContainsPredicate(Document doc, object value)
         {
-            doc.Append(this.DatabaseName, EntityValueToDocValue(value));
+            doc.Append(this.DatabaseName, value);
         }
 
-        void IPropertyPredicateOperator.PutContainedInPredicate(Document doc, IEnumerable<object> value)
+        void IPropertyPredicateOperator.PutContainedInPredicate(Document doc, IEnumerable<object> collections)
         {
-            doc.Append(this.DatabaseName, new Document().Append("$in", value.ToArray()));
+            var name = this.DatabaseName;
+            if (doc.Contains(name))
+            {
+                throw new InvalidOperationException(
+                    String.Format(
+                        "this document should not contain {0} field.", name));
+            }
+
+            var array = collections.Select(this.ToDocumentValue).ToArray();
+            doc.Append(this.DatabaseName, new Document().Append("$in", array));
         }
 
         #endregion
@@ -432,12 +367,12 @@ namespace EasyMongo
 
         void IPropertyUpdateOperator.PutConstantUpdate(Document doc, object value)
         {
-            this.AppendOperation(doc, "$set", EntityValueToDocValue(value));
+            this.AppendOperation(doc, "$set", this.ToDocumentValue(value));
         }
 
         void IPropertyUpdateOperator.PutAddUpdate(Document doc, object value)
         {
-            this.AppendOperation(doc, "$inc", EntityValueToDocValue(value));
+            this.AppendOperation(doc, "$inc", this.ToDocumentValue(value));
         }
 
         void IPropertyUpdateOperator.PutSubtractUpdate(Document doc, object value)
@@ -445,9 +380,9 @@ namespace EasyMongo
             ((IPropertyUpdateOperator)this).PutAddUpdate(doc, -(int)value);
         }
 
-        void IPropertyUpdateOperator.PutPushUpdate(Document doc, IEnumerable<object> values)
+        void IPropertyUpdateOperator.PutPushUpdate(Document doc, object value)
         {
-            this.AppendOperation(doc, "$push", EntityValueToDocValue(values));
+            this.AppendOperation(doc, "$push", this.ToDocumentValue(value));
         }
 
         #endregion

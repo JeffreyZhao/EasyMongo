@@ -31,6 +31,7 @@ namespace EasyMongo.Test
         {
             var mockDescriptor = new Mock<IPropertyDescriptor>();
             mockDescriptor.Setup(d => d.Name).Returns("Hello");
+            mockDescriptor.Setup(d => d.Property).Returns(typeof(Type).GetProperty("Name"));
 
             IPropertyPredicateOperator optr = new PropertyMapper(mockDescriptor.Object, false);
             var doc = new Document();
