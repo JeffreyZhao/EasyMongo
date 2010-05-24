@@ -17,7 +17,7 @@ namespace EasyMongo
             var identityCount = descriptor.Properties.Count(d => d.IsIdentity);
             if (identityCount <= 0)
             {
-                throw new Exception();
+                throw new ArgumentException("No identity specified.");
             }
             else
             {

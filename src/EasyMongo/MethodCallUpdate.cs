@@ -27,9 +27,10 @@ namespace EasyMongo
 
         private static MethodInfo GetSupportedMethod(MethodCallExpression callExpr)
         {
-            if (callExpr.Method.Name != "Push")
+            if (callExpr.Method.Name != "Push" && callExpr.Method.Name != "AddToSet")
             {
-                throw new NotSupportedException("Only support push operation");
+                throw new NotSupportedException(
+                    String.Format("{0} is not supported.", callExpr.Method.Name));
             }
 
             return callExpr.Method;
@@ -40,6 +41,7 @@ namespace EasyMongo
             switch (callExpr.Method.Name)
             {
                 case "Push":
+                case "AddToSet":
                     var array = callExpr.Arguments[1].Eval();
                     return array is IEnumerable<object> ? array : ((IEnumerable)array).Cast<object>().ToList();
                 default:
@@ -66,7 +68,10 @@ namespace EasyMongo
             switch (this.Method.Name)
             {
                 case "Push":
-                    optr.PutPushUpdate(doc, this.Argument);
+                    optr.PutPushUpdate(doc, (IEnumerable<object>)this.Argument);
+                    break;
+                case "AddToSet":
+                    optr.PutAddToSetUpdate(doc, (IEnumerable<object>)this.Argument);
                     break;
                 default:
                     throw new NotSupportedException();

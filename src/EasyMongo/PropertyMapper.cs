@@ -270,10 +270,25 @@ namespace EasyMongo
             ((IPropertyUpdateOperator)this).PutAddUpdate(doc, -(int)value);
         }
 
-        void IPropertyUpdateOperator.PutPushUpdate(Document doc, object value)
+        private object CreateArray(IEnumerable<object> items)
         {
-            this.AppendOperation(doc, "$push", this.TypeProcessor.ToDocumentValue(value));
+            var array = (IList)Activator.CreateInstance(this.Descriptor.Property.PropertyType);
+            foreach (var e in items) array.Add(e);
+            return array;
         }
+
+        void IPropertyUpdateOperator.PutPushUpdate(Document doc, IEnumerable<object> items)
+        {
+            var array = this.CreateArray(items);
+            this.AppendOperation(doc, "$push", this.TypeProcessor.ToDocumentValue(array));
+        }
+
+        void IPropertyUpdateOperator.PutAddToSetUpdate(Document doc, IEnumerable<object> items)
+        {
+            var array = this.CreateArray(items);
+            this.AppendOperation(doc, "$addToSet", new Document().Append("$each", this.TypeProcessor.ToDocumentValue(items)));
+        }
+
 
         #endregion
     }
