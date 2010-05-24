@@ -23,7 +23,7 @@ namespace EasyMongo.Test
             Assert.Equal("ContainedIn", callPredicate.Method.Name);
             Assert.Equal(typeof(Article).GetProperty("Type"), callPredicate.Property);
 
-            var array = ((IEnumerable<object>)callPredicate.Constant).ToArray();
+            var array = ((IEnumerable<object>)callPredicate.Constants[0]).ToArray();
             Assert.Equal("Hello", array[0]);
             Assert.Equal("World", array[1]);
         }

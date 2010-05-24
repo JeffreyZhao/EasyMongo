@@ -72,7 +72,7 @@ namespace EasyMongo.Test
 
             Assert.Equal(typeof(User).GetProperty("Tags"), predicate.Property);
             Assert.Equal("Contains", predicate.Method.Name);
-            Assert.Equal("geek", predicate.Constant);
+            Assert.Equal("geek", predicate.Constants[0]);
         }
     }
 }

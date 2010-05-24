@@ -6,6 +6,7 @@ using Moq;
 using MongoDB.Driver;
 using Xunit;
 using System.Reflection;
+using EasyMongo.Types;
 
 namespace EasyMongo.Test
 {
@@ -168,7 +169,7 @@ namespace EasyMongo.Test
             };
 
             var doc = new Document();
-            mapper.PutStateChange(doc, originalState, currentState);
+            mapper.PutStateUpdate(doc, originalState, currentState);
 
             var innerDoc = (Document)doc["$set"];
             Assert.Equal(1, innerDoc.Count);
@@ -201,7 +202,7 @@ namespace EasyMongo.Test
             };
 
             var doc = new Document();
-            mapper.PutStateChange(doc, originalState, currentState);
+            mapper.PutStateUpdate(doc, originalState, currentState);
 
             var innerDoc = (Document)doc["$pushAll"];
             Assert.Equal(1, innerDoc.Count);
@@ -211,35 +212,35 @@ namespace EasyMongo.Test
             Assert.Equal("World", array[1]);
         }
 
-        [Fact]
-        public void TryPutStateChange_RemoveItemFromArray()
-        {
-            var property = typeof(User).GetProperty("Hobbies");
-            var mockDescriptor = new Mock<IPropertyDescriptor>();
-            mockDescriptor.Setup(d => d.Property).Returns(property);
-            mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
+        //[Fact]
+        //public void TryPutStateChange_RemoveItemFromArray()
+        //{
+        //    var property = typeof(User).GetProperty("Hobbies");
+        //    var mockDescriptor = new Mock<IPropertyDescriptor>();
+        //    mockDescriptor.Setup(d => d.Property).Returns(property);
+        //    mockDescriptor.Setup(d => d.Name).Returns("Hobbies");
 
-            var mapper = new PropertyMapper(mockDescriptor.Object, false);
+        //    var mapper = new PropertyMapper(mockDescriptor.Object, false);
 
-            var list = new List<string> { "Good", "Girl", "Hello", "World" };
-            var originalState = new Dictionary<IPropertyDescriptor, object>
-            {
-                { mapper.Descriptor, new ArrayState(list) }
-            };
+        //    var list = new List<string> { "Good", "Girl", "Hello", "World" };
+        //    var originalState = new Dictionary<IPropertyDescriptor, object>
+        //    {
+        //        { mapper.Descriptor, new ArrayState(list) }
+        //    };
 
-            list.Remove("Good");
-            list.Remove("Girl");
-            var currentState = new Dictionary<IPropertyDescriptor, object>
-            {
-                { mapper.Descriptor, new ArrayState(list) }
-            };
+        //    list.Remove("Good");
+        //    list.Remove("Girl");
+        //    var currentState = new Dictionary<IPropertyDescriptor, object>
+        //    {
+        //        { mapper.Descriptor, new ArrayState(list) }
+        //    };
 
-            var doc = new Document();
+        //    var doc = new Document();
 
-            Assert.Throws(
-                typeof(NotSupportedException),
-                () => mapper.PutStateChange(doc, originalState, currentState));
-        }
+        //    Assert.Throws(
+        //        typeof(NotSupportedException),
+        //        () => mapper.PutStateUpdate(doc, originalState, currentState));
+        //}
 
         [Fact]
         public void TryPutStateChange_ChangeFlags()
@@ -260,7 +261,7 @@ namespace EasyMongo.Test
             };
 
             var doc = new Document();
-            mapper.PutStateChange(doc, originalState, currentState);
+            mapper.PutStateUpdate(doc, originalState, currentState);
 
             var innerDoc = (Document)doc["$set"];
             Assert.Equal(1, innerDoc.Count);
@@ -289,7 +290,7 @@ namespace EasyMongo.Test
             };
 
             var doc = new Document();
-            mapper.PutStateChange(doc, originalState, currentState);
+            mapper.PutStateUpdate(doc, originalState, currentState);
 
             var innerDoc = (Document)doc["$set"];
             Assert.Equal(1, innerDoc.Count);

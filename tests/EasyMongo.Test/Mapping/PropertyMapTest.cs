@@ -26,7 +26,6 @@ namespace EasyMongo.Test.Mapping
             Assert.Equal("TestProperty", descriptor.Name);
             Assert.Equal(false, descriptor.IsIdentity);
             Assert.Equal(false, descriptor.HasDefaultValue);
-            Assert.Equal(0, descriptor.DefaultValue);
         }
 
         [Fact]
@@ -39,7 +38,6 @@ namespace EasyMongo.Test.Mapping
             Assert.Equal("TestProperty", descriptor.Name);
             Assert.Equal(true, descriptor.IsIdentity);
             Assert.Equal(false, descriptor.HasDefaultValue);
-            Assert.Equal(0, descriptor.DefaultValue);
         }
         
         [Fact]
@@ -52,7 +50,7 @@ namespace EasyMongo.Test.Mapping
             Assert.Equal("TestProperty", descriptor.Name);
             Assert.Equal(false, descriptor.IsIdentity);
             Assert.Equal(true, descriptor.HasDefaultValue);
-            Assert.Equal(20, descriptor.DefaultValue); 
+            Assert.Equal(20, descriptor.GetDefaultValue());
         }
 
         [Fact]
@@ -65,7 +63,6 @@ namespace EasyMongo.Test.Mapping
             Assert.Equal("Another", descriptor.Name);
             Assert.Equal(false, descriptor.IsIdentity);
             Assert.Equal(false, descriptor.HasDefaultValue);
-            Assert.Equal(0, descriptor.DefaultValue);
             Assert.Equal(0, descriptor.ChangeWithProperties.Count);
         }
 
@@ -81,7 +78,6 @@ namespace EasyMongo.Test.Mapping
             Assert.Equal("TestProperty", descriptor.Name);
             Assert.Equal(false, descriptor.IsIdentity);
             Assert.Equal(false, descriptor.HasDefaultValue);
-            Assert.Equal(0, descriptor.DefaultValue);
 
             Assert.Equal(2, descriptor.ChangeWithProperties.Count);
             Assert.True(descriptor.ChangeWithProperties.Contains(typeof(TestEntity).GetProperty("ChangeWithProperty")));
