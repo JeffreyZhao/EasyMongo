@@ -31,7 +31,7 @@ namespace EasyMongo.Types
             var array = (IList)Activator.CreateInstance(this.Property.PropertyType);
             if (docValue is Document) return array;
 
-            foreach (var item in (object[])docValue) array.Add(item);
+            foreach (var item in (IEnumerable)docValue) array.Add(item);
             return array;
         }
 

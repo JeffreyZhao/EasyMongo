@@ -161,7 +161,10 @@ namespace EasyMongo
                     var coll = mapper.GetCollection(this.m_database);
                     coll.Delete(identityDoc);
 
-                    this.m_stateLoaded.Remove(entity);
+                    if (this.EntityTrackingEnabled)
+                    {
+                        this.m_stateLoaded.Remove(entity);
+                    }
                 }
             }
 
