@@ -5,6 +5,7 @@ using System.Text;
 using System.Reflection;
 using System.Linq.Expressions;
 using System.Collections.ObjectModel;
+using EasyMongo.Types;
 
 namespace EasyMongo.Mapping
 {
@@ -24,6 +25,7 @@ namespace EasyMongo.Mapping
         private string m_name;
         private bool m_hasDefaultValue;
         private Func<object> m_defaultValueFactory;
+        private Func<ITypeProcessor> m_typeProcessorFactory;
         private List<PropertyInfo> m_changeWithProperties;
 
         public PropertyInfo Property { get; private set; }
@@ -53,6 +55,19 @@ namespace EasyMongo.Mapping
             return this;
         }
 
+        public PropertyMap<TEntity, TProperty> Processor<TProcesspr>()
+            where TProcesspr : ITypeProcessor, new()
+        {
+            this.m_typeProcessorFactory = () => new TProcesspr();
+            return this;
+        }
+
+        public PropertyMap<TEntity, TProperty> Processor(ITypeProcessor processor)
+        {
+            this.m_typeProcessorFactory = () => processor;
+            return this;
+        }
+
         IPropertyDescriptor IPropertyMap.ToDescriptor()
         {
             return new PropertyDescriptor
@@ -62,7 +77,8 @@ namespace EasyMongo.Mapping
                 HasDefaultValue = this.m_hasDefaultValue,
                 Name = this.m_name ?? this.Property.Name,
                 Property = this.Property,
-                ChangeWithProperties = new ReadOnlyCollection<PropertyInfo>(this.m_changeWithProperties)
+                ChangeWithProperties = new ReadOnlyCollection<PropertyInfo>(this.m_changeWithProperties),
+                TypeProcessorFactory = this.m_typeProcessorFactory ?? (() => null)
             };
         }
     }

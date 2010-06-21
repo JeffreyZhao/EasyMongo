@@ -78,6 +78,8 @@
     <Compile Include="PredicateExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyMapper.cs" />
+    <Compile Include="Reflection\EntityFactory.cs" />
+    <Compile Include="Reflection\PropertyAccessor.cs" />
     <Compile Include="Types\ArrayProcessor.cs" />
     <Compile Include="Types\ArrayState.cs" />
     <Compile Include="Types\BasicProcessor.cs" />

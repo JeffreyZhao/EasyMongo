@@ -5,11 +5,14 @@ using System.Text;
 using MongoDB.Driver;
 using System.Linq.Expressions;
 using System.Reflection;
+using EasyMongo.Reflection;
 
 namespace EasyMongo
 {
     internal class EntityMapper
     {
+
+
         public EntityMapper(IEntityDescriptor descriptor)
         {
             this.Descriptor = descriptor;
@@ -29,12 +32,15 @@ namespace EasyMongo
             this.m_identities = this.m_properties.Values
                 .Where(m => m.Descriptor.IsIdentity)
                 .ToDictionary(p => p.Descriptor.Property);
+
+            this.Factory = new EntityFactory(this.Descriptor.Type);
         }
 
         private Dictionary<PropertyInfo, PropertyMapper> m_properties;
         private Dictionary<PropertyInfo, PropertyMapper> m_identities;
 
         public IEntityDescriptor Descriptor { get; private set; }
+        public EntityFactory Factory { get; private set; }
 
         public IMongoCollection GetCollection(IMongoDatabase database)
         {
@@ -136,7 +142,7 @@ namespace EasyMongo
 
         public object GetEntity(Document doc)
         {
-            var entity = Activator.CreateInstance(this.Descriptor.Type);
+            var entity = this.Factory.Create();
             foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
             {
                 mapper.SetValue(entity, doc);

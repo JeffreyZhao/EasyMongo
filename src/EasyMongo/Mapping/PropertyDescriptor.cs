@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 using System.Collections.ObjectModel;
+using EasyMongo.Types;
 
 namespace EasyMongo.Mapping
 {
@@ -21,9 +22,16 @@ namespace EasyMongo.Mapping
 
         public ReadOnlyCollection<PropertyInfo> ChangeWithProperties { get; set; }
 
+        public Func<ITypeProcessor> TypeProcessorFactory { get; set; }
+
         public object GetDefaultValue()
         {
             return this.DefaultValueFactory.Invoke();
+        }
+
+        public ITypeProcessor GetTypeProcessor()
+        {
+            return this.TypeProcessorFactory.Invoke();
         }
     }
 }

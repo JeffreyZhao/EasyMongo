@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Collections;
 using System.Reflection;
 using EasyMongo.Types;
+using EasyMongo.Reflection;
 
 namespace EasyMongo
 {
@@ -17,24 +18,32 @@ namespace EasyMongo
             this.Descriptor = descriptor;
             this.IsDefaultIdentity = isDefaultIdentity;
 
-            var type = descriptor.Property.PropertyType;
-            if (type.IsEnum)
+            this.TypeProcessor = this.Descriptor.GetTypeProcessor();
+            if (this.TypeProcessor == null)
             {
-                this.TypeProcessor = new EnumProcessor(descriptor.Property);
+                var type = descriptor.Property.PropertyType;
+                if (type.IsEnum)
+                {
+                    this.TypeProcessor = new EnumProcessor(descriptor.Property);
+                }
+                else if (typeof(IList).IsAssignableFrom(type))
+                {
+                    this.TypeProcessor = new ArrayProcessor(descriptor.Property);
+                }
+                else
+                {
+                    this.TypeProcessor = new BasicProcessor();
+                }
             }
-            else if (typeof(IList).IsAssignableFrom(type))
-            {
-                this.TypeProcessor = new ArrayProcessor(descriptor.Property);
-            }
-            else
-            {
-                this.TypeProcessor = new BasicProcessor();
-            }
+
+            this.Accessor = new PropertyAccessor(descriptor.Property);
         }
 
         public ITypeProcessor TypeProcessor { get; private set; }
         
         public IPropertyDescriptor Descriptor { get; private set; }
+
+        public PropertyAccessor Accessor { get; private set; }
 
         public bool IsDefaultIdentity { get; private set; }
 
@@ -59,7 +68,7 @@ namespace EasyMongo
 
         public void PutValue(Document target, object sourceEntity)
         {
-            var value = this.Descriptor.Property.GetValue(sourceEntity, null);
+            var value = this.Accessor.GetValue(sourceEntity);
             target.Append(this.DatabaseName, this.TypeProcessor.ToDocumentValue(value));
         }
 
@@ -74,7 +83,7 @@ namespace EasyMongo
 
         public void PutState(Dictionary<IPropertyDescriptor, object> targetState, object sourceEntity)
         {
-            var value = this.Descriptor.Property.GetValue(sourceEntity, null);
+            var value = this.Accessor.GetValue(sourceEntity);
             var stateValue = this.TypeProcessor.ToStateValue(value);
             targetState.Add(this.Descriptor, stateValue);
         }
@@ -99,7 +108,7 @@ namespace EasyMongo
                 throw new ArgumentException("Missing the value of " + name);
             }
 
-            this.Descriptor.Property.SetValue(targetEntity, value, null);
+            this.Accessor.SetValue(targetEntity, value);
         }
 
         public bool IsStateChanged(
@@ -114,7 +123,7 @@ namespace EasyMongo
 
         public void PutValueUpdate(Document targetDoc, object sourceEntity)
         {
-            var value = this.Descriptor.Property.GetValue(sourceEntity, null);
+            var value = this.Accessor.GetValue(sourceEntity);
             ((IPropertyUpdateOperator)this).PutConstantUpdate(targetDoc, value);
         }
 

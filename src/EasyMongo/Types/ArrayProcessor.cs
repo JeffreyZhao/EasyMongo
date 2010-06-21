@@ -8,7 +8,7 @@ using MongoDB.Driver;
 
 namespace EasyMongo.Types
 {
-    public class ArrayProcessor : IArrayProcessor
+    internal class ArrayProcessor : IArrayProcessor
     {
         public ArrayProcessor(PropertyInfo property)
         {
