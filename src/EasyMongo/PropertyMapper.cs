@@ -230,7 +230,17 @@ namespace EasyMongo
 
         void IPropertyPredicateOperator.PutContainsPredicate(Document doc, object value)
         {
-            doc.Append(this.DatabaseName, value);
+            var docValue = this.TypeProcessor.ToDocumentValue(value);
+            var array = docValue as Array;
+            if (array != null)
+            {
+                if (array.Length == 1)
+                    throw new NotSupportedException("Noly support one single element in Constains method");
+
+                docValue = array.GetValue(0);
+            }
+
+            doc.Append(this.DatabaseName, docValue);
         }
 
         void IPropertyPredicateOperator.PutContainedInPredicate(Document doc, IEnumerable<object> collection)
