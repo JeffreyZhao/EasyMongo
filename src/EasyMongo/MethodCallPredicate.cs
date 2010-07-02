@@ -23,6 +23,11 @@ namespace EasyMongo
         {
             var maybePropExpr = expr.Object ?? expr.Arguments[0];
 
+            if (maybePropExpr.NodeType == ExpressionType.Convert)
+            {
+                maybePropExpr = ((UnaryExpression)maybePropExpr).Operand;
+            }
+
             var memberExpr = maybePropExpr as MemberExpression;
             if (memberExpr == null) throw new ArgumentException(maybePropExpr + " is not a property.");
 

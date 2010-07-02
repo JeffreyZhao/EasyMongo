@@ -78,6 +78,9 @@ namespace EasyMongo
                 case ExpressionType.Equal:
                     optr.PutEqualPredicate(doc, this.Constant);
                     break;
+                case ExpressionType.NotEqual:
+                    optr.PutNotEqualPredicate(doc, this.Constant);
+                    break;
                 case ExpressionType.GreaterThan:
                     optr.PutGreaterThanPredicate(doc, this.Constant);
                     break;

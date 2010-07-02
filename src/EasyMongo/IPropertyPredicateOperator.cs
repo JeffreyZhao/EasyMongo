@@ -16,5 +16,6 @@ namespace EasyMongo
         void PutContainsPredicate(Document doc, object value);
         void PutContainedInPredicate(Document doc, IEnumerable<object> collection);
         void PutRegexMatchPredicate(Document doc, string pattern, string options);
+        void PutNotEqualPredicate(Document doc, object value);
     }
 }

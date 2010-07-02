@@ -186,6 +186,11 @@ namespace EasyMongo
             doc.Append(name, this.TypeProcessor.ToDocumentValue(value));
         }
 
+        void IPropertyPredicateOperator.PutNotEqualPredicate(Document doc, object value)
+        {
+            this.PutInnerPredicate(doc, "$ne", value);
+        }
+
         private void PutInnerPredicate(Document doc, string op, object value)
         {
             var name = this.DatabaseName;
@@ -230,17 +235,19 @@ namespace EasyMongo
 
         void IPropertyPredicateOperator.PutContainsPredicate(Document doc, object value)
         {
-            var docValue = this.TypeProcessor.ToDocumentValue(value);
-            var array = docValue as Array;
-            if (array != null)
+            var arrayProcessor = this.TypeProcessor as ArrayProcessor;
+            if (arrayProcessor != null) 
             {
-                if (array.Length == 1)
-                    throw new NotSupportedException("Noly support one single element in Constains method");
-
-                docValue = array.GetValue(0);
+                value = arrayProcessor.Create(value);
             }
 
-            doc.Append(this.DatabaseName, docValue);
+            var array = (Array)this.TypeProcessor.ToDocumentValue(value);
+            if (array.Length != 1)
+            {
+                throw new NotSupportedException("Noly support one single element in Constains method");
+            }
+
+            doc.Append(this.DatabaseName, array.GetValue(0));
         }
 
         void IPropertyPredicateOperator.PutContainedInPredicate(Document doc, IEnumerable<object> collection)

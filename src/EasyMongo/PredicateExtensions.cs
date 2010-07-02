@@ -18,7 +18,7 @@ namespace EasyMongo
             return Regex.IsMatch(s, expression);
         }
 
-        public static bool Constains(this Enum container, Enum item)
+        public static bool Contains(this Enum container, Enum item)
         {
             throw new NotSupportedException("Cannot execute directly.");
         }

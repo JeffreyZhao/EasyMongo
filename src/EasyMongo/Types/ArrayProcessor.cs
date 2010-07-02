@@ -20,7 +20,6 @@ namespace EasyMongo.Types
         public object ToDocumentValue(object value)
         {
             if (value == null) return null;
-
             return ((IList)value).Cast<object>().ToArray();
         }
 
@@ -75,6 +74,13 @@ namespace EasyMongo.Types
             if (!Object.ReferenceEquals(originalArray.Container, currentArray.Container)) return null;
 
             return currentArray.Items.Skip(originalArray.Items.Count).ToArray();
+        }
+
+        public object Create(params object[] items)
+        {
+            var array = (IList)Activator.CreateInstance(this.Property.PropertyType);
+            foreach (var i in items) array.Add(i);
+            return array;
         }
 
         public object FromStateValue(object stateValue)
