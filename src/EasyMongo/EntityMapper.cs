@@ -97,7 +97,8 @@ namespace EasyMongo
                 foreach (UnaryExpression expr in argsExpr.Expressions)
                 {
                     var lambdaExpr = (LambdaExpression)expr.Operand;
-                    var propExpr = (MemberExpression)lambdaExpr.Body;
+                    var propExpr = (MemberExpression)((lambdaExpr.Body is UnaryExpression) ?
+                        ((UnaryExpression)lambdaExpr.Body).Operand : lambdaExpr.Body);
                     var propInfo = (PropertyInfo)propExpr.Member;
 
                     if (!include && this.m_identities.ContainsKey(propInfo)) continue;

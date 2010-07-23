@@ -57,7 +57,7 @@ namespace EasyMongo.Types
 
             for (int i = 0; i < originalArray.Items.Count; i++)
             {
-                if (currentArray.Items[i] != originalArray.Items[i])
+                if (!Object.Equals(currentArray.Items[i], originalArray.Items[i]))
                 {
                     throw new NotSupportedException("Does not support item removal in array.");
                 }
