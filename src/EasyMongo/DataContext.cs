@@ -62,7 +62,7 @@ namespace EasyMongo
             return new MongoQuery<T>(this);
         }
 
-        internal List<T> List<T>(Expression predicate, int skip, int? limit, List<SortOrder> sortOrders, Expression selector) where T : class
+        internal List<T> List<T>(Expression predicate, int skip, int? limit, List<SortOrder> sortOrders, List<QueryHint> hints, Expression selector) where T : class
         {
             var mapper = this.m_mappingSource.GetEntityMapper<T>();
             var predicateDoc = mapper.GetPredicate(predicate);
@@ -73,7 +73,17 @@ namespace EasyMongo
             var coll = mapper.GetCollection(this.m_database);
 
             var mongoQuery = coll.Find(predicateDoc).Fields(fieldsDoc).Skip(skip).Sort(sortDoc);
-            if (limit.HasValue) mongoQuery = mongoQuery.Limit(limit.Value);
+
+            if (limit.HasValue)
+            {
+                mongoQuery = mongoQuery.Limit(limit.Value);
+            }
+
+            if (hints != null && hints.Count > 0)
+            {
+                var hintsDoc = mapper.GetHints(hints);
+                mongoQuery = mongoQuery.Hint(hintsDoc);
+            }
 
             var docList = mongoQuery.Documents.ToList();
 

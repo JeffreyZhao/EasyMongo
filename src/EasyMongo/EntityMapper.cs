@@ -209,5 +209,19 @@ namespace EasyMongo
 
             return updateDoc;
         }
+
+        public Document GetHints(List<QueryHint> hints)
+        {
+            Document result = new Document();
+
+            foreach (var h in hints)
+            {
+                var propExpr = (MemberExpression)h.KeySelector;
+                var propInfo = (PropertyInfo)propExpr.Member;
+                this.m_properties[propInfo].PutHint(result, h.Descending);
+            }
+
+            return result;
+        }
     }
 }

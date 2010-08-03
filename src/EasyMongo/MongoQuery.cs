@@ -19,6 +19,19 @@ namespace EasyMongo
         public bool Descending { get; set; }
     }
 
+    internal class QueryHint
+    {
+        public QueryHint(Expression keySelector, bool desc)
+        {
+            this.KeySelector = keySelector;
+            this.Descending = desc;
+        }
+
+        public Expression KeySelector { get; set; }
+
+        public bool Descending { get; set; }
+    }
+
     public class MongoQuery<T> where T : class
     {
         internal MongoQuery(DataContext db)
@@ -33,6 +46,7 @@ namespace EasyMongo
         private Expression m_selector;
 
         private List<SortOrder> m_sortOrders = new List<SortOrder>();
+        private List<QueryHint> m_hints = new List<QueryHint>();
 
         public MongoQuery<T> Where(Expression<Func<T, bool>> predicate)
         {
@@ -82,6 +96,13 @@ namespace EasyMongo
             return this;
         }
 
+        public MongoQuery<T> Hint<TKey>(Expression<Func<T, TKey>> selector, bool desc)
+        { 
+            this.m_hints.Add(new QueryHint(selector.Body, desc));
+
+            return this;
+        }
+
         public int Count()
         {
             return this.m_db.Count<T>(this.m_predicate);
@@ -94,6 +115,7 @@ namespace EasyMongo
                 this.m_skip,
                 this.m_limit,
                 this.m_sortOrders,
+                this.m_hints,
                 this.m_selector);
         }
     }

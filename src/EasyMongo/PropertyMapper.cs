@@ -317,5 +317,10 @@ namespace EasyMongo
 
 
         #endregion
+
+        internal void PutHint(Document doc, bool desc)
+        {
+            doc.Append(this.DatabaseName, desc ? -1 : 1);
+        }
     }
 }
