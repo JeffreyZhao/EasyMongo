@@ -6,10 +6,8 @@ using System.Collections.ObjectModel;
 
 namespace EasyMongo
 {
-    public interface IEntityDescriptor
+    public interface IEntityDescriptor<TEntity>
     {
-        Type Type { get; }
-
         string CollectionName { get; }
 
         ReadOnlyCollection<IPropertyDescriptor> Properties { get; }

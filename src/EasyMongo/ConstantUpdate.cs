@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Linq.Expressions;
 using MongoDB.Driver;
 using System.Diagnostics;
+using MongoDB.Bson;
 
 namespace EasyMongo
 {
@@ -28,7 +29,7 @@ namespace EasyMongo
         public PropertyInfo Property { get; private set; }
         public object Value { get; private set; }
 
-        public void Fill(IPropertyUpdateOperator optr, Document doc)
+        public void Fill(IPropertyUpdateOperator optr, BsonDocument doc)
         {
             optr.PutConstantUpdate(doc, this.Value);
         }

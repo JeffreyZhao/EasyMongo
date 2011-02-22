@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MongoDB.Bson;
 
 namespace EasyMongo.Types
 {
     public interface ITypeProcessor
     {
-        object ToDocumentValue(object value);
+        BsonValue ToBsonValue(object value);
 
-        object FromDocumentValue(object docValue);
+        object FromBsonValue(BsonValue bsonValue);
 
         object ToStateValue(object value);
 

@@ -1,34 +1,50 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{983AB690-DEA2-466D-94E1-AA13D4596BD3}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{12141F0E-DAF4-4D6F-B3CA-F6458D2EA3F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyMongo", "src\EasyMongo\EasyMongo.csproj", "{C085168F-683C-406B-B28A-198DF0239844}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyMongo", "src\EasyMongo\EasyMongo.csproj", "{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{57702968-1183-48B5-BC46-D31EED3132E7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleUsages", "samples\SimpleUsages\SimpleUsages.csproj", "{E79E7487-114C-4946-BF8F-C283C440E86A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyMongo.Test", "tests\EasyMongo.Test\EasyMongo.Test.csproj", "{BF4C67EB-55B8-4721-B5E8-5D95FAD83F8E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{67CC3A4A-A9B7-4B90-A457-3B07454EF209}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C085168F-683C-406B-B28A-198DF0239844}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C085168F-683C-406B-B28A-198DF0239844}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C085168F-683C-406B-B28A-198DF0239844}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C085168F-683C-406B-B28A-198DF0239844}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BF4C67EB-55B8-4721-B5E8-5D95FAD83F8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BF4C67EB-55B8-4721-B5E8-5D95FAD83F8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BF4C67EB-55B8-4721-B5E8-5D95FAD83F8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BF4C67EB-55B8-4721-B5E8-5D95FAD83F8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}.Release|x86.ActiveCfg = Release|Any CPU
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Debug|x86.ActiveCfg = Debug|x86
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Debug|x86.Build.0 = Debug|x86
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Release|Any CPU.ActiveCfg = Release|x86
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Release|Mixed Platforms.Build.0 = Release|x86
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Release|x86.ActiveCfg = Release|x86
+		{E79E7487-114C-4946-BF8F-C283C440E86A}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{C085168F-683C-406B-B28A-198DF0239844} = {983AB690-DEA2-466D-94E1-AA13D4596BD3}
-		{BF4C67EB-55B8-4721-B5E8-5D95FAD83F8E} = {57702968-1183-48B5-BC46-D31EED3132E7}
+		{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A} = {12141F0E-DAF4-4D6F-B3CA-F6458D2EA3F8}
+		{E79E7487-114C-4946-BF8F-C283C440E86A} = {67CC3A4A-A9B7-4B90-A457-3B07454EF209}
 	EndGlobalSection
 EndGlobal

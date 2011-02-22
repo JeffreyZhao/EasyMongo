@@ -9,11 +9,6 @@ namespace EasyMongo
 {
     internal class EntityState : Dictionary<IPropertyDescriptor, object>
     {
-        public EntityState(EntityMapper mapper)
-        {
-            this.Mapper = mapper;
-        }
-
-        public EntityMapper Mapper { get; private set; }
+        
     }
 }

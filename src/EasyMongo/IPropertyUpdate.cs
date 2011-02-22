@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 using MongoDB.Driver;
+using MongoDB.Bson;
 
 namespace EasyMongo
 {
@@ -11,6 +12,6 @@ namespace EasyMongo
     {
         PropertyInfo Property { get; }
 
-        void Fill(IPropertyUpdateOperator optr, Document doc);
+        void Fill(IPropertyUpdateOperator optr, BsonDocument doc);
     }
 }

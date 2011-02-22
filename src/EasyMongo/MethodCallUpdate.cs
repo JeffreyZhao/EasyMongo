@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Collections.ObjectModel;
 using System.Collections;
 using EasyMongo.Expressions;
+using MongoDB.Bson;
 
 namespace EasyMongo
 {
@@ -36,14 +37,16 @@ namespace EasyMongo
             return callExpr.Method;
         }
 
-        private static object GetSupprotedArgument(MethodCallExpression callExpr)
+        private static object GetSupprotedArgument(MethodCallExpression expr)
         {
-            switch (callExpr.Method.Name)
+            var constantExprIndex = expr.Object == null ? 1 : 0;
+            var value = expr.Arguments[constantExprIndex].Eval();
+
+            switch (expr.Method.Name)
             {
                 case "Push":
                 case "AddToSet":
-                    var array = callExpr.Arguments[1].Eval();
-                    return array is IEnumerable<object> ? array : ((IEnumerable)array).Cast<object>().ToList();
+                    return value is IEnumerable<object> ? value : ((IEnumerable)value).Cast<object>().ToList();
                 default:
                     throw new NotSupportedException();
             }
@@ -63,7 +66,7 @@ namespace EasyMongo
         public MethodInfo Method { get; private set; }
         public object Argument { get; private set; }
 
-        public void Fill(IPropertyUpdateOperator optr, Document doc)
+        public void Fill(IPropertyUpdateOperator optr, BsonDocument doc)
         {
             switch (this.Method.Name)
             {

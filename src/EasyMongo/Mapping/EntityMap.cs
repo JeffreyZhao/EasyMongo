@@ -8,7 +8,7 @@ using System.Reflection;
 
 namespace EasyMongo.Mapping
 {
-    public abstract class EntityMap<T> : IEntityMap
+    public abstract class EntityMap<T>
         where T : class
     {
         public EntityMap()
@@ -38,15 +38,11 @@ namespace EasyMongo.Mapping
             this.m_collectionName = name;
         }
 
-        IEntityDescriptor IEntityMap.ToDescriptor()
+        public IEntityDescriptor<T> GetDescriptor()
         {
-            return new EntityDescriptor
-            {
-                Type = typeof(T),
-                CollectionName = this.m_collectionName,
-                Properties = new ReadOnlyCollection<IPropertyDescriptor>(
-                    this.m_propertyMaps.Select(p => p.Value.ToDescriptor()).ToList())
-            };
+            return new EntityDescriptor<T>(
+                this.m_collectionName,
+                this.m_propertyMaps.Select(p => p.Value.ToDescriptor()).ToList());
         }
     }
 }

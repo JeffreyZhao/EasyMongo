@@ -7,6 +7,7 @@ using System.Reflection;
 using MongoDB.Driver;
 using EasyMongo.Expressions;
 using System.Collections;
+using MongoDB.Bson;
 
 namespace EasyMongo
 {
@@ -44,13 +45,9 @@ namespace EasyMongo
 
             if (expr.Method.Name == "Contains")
             {
-                if (!propertyType.IsEnum) return new[] { value };
-                if (value is Enum) return new[] { value };
-
-                var name = Enum.GetName(propertyType, value);
-                return new[] { Enum.Parse(propertyType, name) };
+                return new[] { value };
             }
-            else if (expr.Method.Name == "ContainedIn")
+            else if (expr.Method.Name == "In")
             {
                 return new[] { ((IEnumerable)value).Cast<object>() };
             }
@@ -67,7 +64,7 @@ namespace EasyMongo
 
         private static MethodInfo CheckSupportedMethod(MethodInfo method)
         {
-            if (method.Name != "Contains" && method.Name != "ContainedIn" && method.Name != "Matches")
+            if (method.Name != "Contains" && method.Name != "In" && method.Name != "Matches")
             {
                 throw new NotSupportedException(
                     String.Format("{0} is not supported.", method.Name));
@@ -80,15 +77,15 @@ namespace EasyMongo
         public PropertyInfo Property { get; private set; }
         public object[] Constants { get; private set; }
 
-        public void Fill(IPropertyPredicateOperator optr, Document doc)
+        public void Fill(IPropertyPredicateOperator optr, QueryDocument doc)
         {
             switch (this.Method.Name)
-            { 
+            {
                 case "Contains":
                     optr.PutContainsPredicate(doc, this.Constants[0]);
                     break;
-                case "ContainedIn":
-                    optr.PutContainedInPredicate(doc, (IEnumerable<object>)this.Constants[0]);
+                case "In":
+                    optr.PutInPredicate(doc, (IEnumerable<object>)this.Constants[0]);
                     break;
                 case "Matches":
                     optr.PutRegexMatchPredicate(doc, (string)this.Constants[0], (string)this.Constants[1]);

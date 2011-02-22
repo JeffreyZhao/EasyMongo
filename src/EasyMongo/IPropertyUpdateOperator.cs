@@ -2,20 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MongoDB.Driver;
+using MongoDB.Bson;
 
 namespace EasyMongo
 {
     internal interface IPropertyUpdateOperator
     {
-        void PutConstantUpdate(Document doc, object value);
+        void PutConstantUpdate(BsonDocument doc, object value);
 
-        void PutAddUpdate(Document doc, object value);
+        void PutAddUpdate(BsonDocument doc, object value);
 
-        void PutSubtractUpdate(Document doc, object value);
+        void PutPushUpdate(BsonDocument doc, IEnumerable<object> items);
 
-        void PutPushUpdate(Document doc, IEnumerable<object> items);
-
-        void PutAddToSetUpdate(Document doc, IEnumerable<object> items);
+        void PutAddToSetUpdate(BsonDocument doc, IEnumerable<object> items);
     }
 }

@@ -8,7 +8,7 @@ namespace EasyMongo
 {
     public static class PredicateExtensions
     {
-        public static bool ContainedIn<T>(this T item, IEnumerable<T> container)
+        public static bool In<T>(this T item, IEnumerable<T> container)
         {
             return container.Contains(item);
         }

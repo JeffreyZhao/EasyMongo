@@ -3,19 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
+using MongoDB.Bson;
 
 namespace EasyMongo.Types
 {
     internal class BasicProcessor : ITypeProcessor
     {
-        public virtual object ToDocumentValue(object value)
+        public virtual BsonValue ToBsonValue(object value)
         {
-            return value;
+            return BsonValue.Create(value);
         }
 
-        public virtual object FromDocumentValue(object docValue)
+        public virtual object FromBsonValue(BsonValue bsonValue)
         {
-            return docValue;
+            return bsonValue.RawValue;
         }
 
         public virtual object ToStateValue(object value)

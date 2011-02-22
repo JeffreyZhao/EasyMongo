@@ -8,6 +8,7 @@ using System.Collections;
 using System.Reflection;
 using EasyMongo.Types;
 using EasyMongo.Reflection;
+using MongoDB.Bson;
 
 namespace EasyMongo
 {
@@ -47,7 +48,7 @@ namespace EasyMongo
 
         public bool IsDefaultIdentity { get; private set; }
 
-        public string DatabaseName
+        public string NameInDatabase
         {
             get
             {
@@ -66,18 +67,18 @@ namespace EasyMongo
             }
         }
 
-        public void PutValue(Document target, object sourceEntity)
+        public void PutValue(BsonDocument target, object sourceEntity)
         {
             var value = this.Accessor.GetValue(sourceEntity);
-            target.Append(this.DatabaseName, this.TypeProcessor.ToDocumentValue(value));
+            target.Add(this.NameInDatabase, this.TypeProcessor.ToBsonValue(value));
         }
 
-        public void PutField(Document doc, bool include)
+        public void PutField(BsonDocument doc, bool include)
         {
-            var name = this.DatabaseName;
+            var name = this.NameInDatabase;
             if (!doc.Contains(name))
             {
-                doc.Append(name, include ? 1 : 0);
+                doc.Add(name, include ? 1 : 0);
             }
         }
 
@@ -88,16 +89,15 @@ namespace EasyMongo
             targetState.Add(this.Descriptor, stateValue);
         }
 
-        public void SetValue(object targetEntity, Document sourceDoc)
+        public void SetValue(object targetEntity, BsonDocument sourceDoc)
         {
-            var name = this.DatabaseName;
+            var name = this.NameInDatabase;
 
             object value;
             if (sourceDoc.Contains(name))
             {
                 var docValue = sourceDoc[name];
-                if (docValue == MongoDBNull.Value) docValue = null;
-                value = this.TypeProcessor.FromDocumentValue(docValue);
+                value = this.TypeProcessor.FromBsonValue(docValue);
             }
             else if (this.Descriptor.HasDefaultValue)
             {
@@ -121,14 +121,14 @@ namespace EasyMongo
             return this.TypeProcessor.IsStateChanged(original, current);
         }
 
-        public void PutValueUpdate(Document targetDoc, object sourceEntity)
+        public void PutValueUpdate(BsonDocument targetDoc, object sourceEntity)
         {
             var value = this.Accessor.GetValue(sourceEntity);
             ((IPropertyUpdateOperator)this).PutConstantUpdate(targetDoc, value);
         }
 
         public void PutStateUpdate(
-            Document targetDoc,
+            BsonDocument targetDoc,
             Dictionary<IPropertyDescriptor, object> originalState,
             Dictionary<IPropertyDescriptor, object> currentState)
         {
@@ -138,7 +138,7 @@ namespace EasyMongo
             var arrayProcessor = this.TypeProcessor as IArrayProcessor;
             if (arrayProcessor != null)
             {
-                var itemsToPush = arrayProcessor.GetItemsToPush(original, current);
+                var itemsToPush = arrayProcessor.GetPushingValues(original, current);
                 if (itemsToPush != null)
                 {
                     this.AppendOperation(targetDoc, "$pushAll", itemsToPush);
@@ -150,32 +150,37 @@ namespace EasyMongo
             ((IPropertyUpdateOperator)this).PutConstantUpdate(targetDoc, value);
         }
 
-        private void AppendOperation(Document doc, string op, object docValue)
+        private void AppendOperation(BsonDocument doc, string op, BsonValue bsonValue)
         {
-            Document innerDoc;
+            BsonDocument innerDoc;
             if (doc.Contains(op))
             {
-                innerDoc = (Document)doc[op];
+                innerDoc = (BsonDocument)doc[op];
             }
             else
             {
-                innerDoc = new Document();
-                doc.Append(op, innerDoc);
+                innerDoc = new BsonDocument();
+                doc.Add(op, innerDoc);
             }
 
-            innerDoc.Append(this.DatabaseName, docValue);
+            innerDoc.Add(this.NameInDatabase, bsonValue);
         }
 
-        public void PutSortOrder(Document doc, bool descending)
+        public void PutSortOrder(BsonDocument doc, bool descending)
         {
-            doc.Append(this.DatabaseName, descending ? -1 : 1);
+            doc.Add(this.NameInDatabase, descending ? -1 : 1);
+        }
+
+        public void PutHint(BsonDocument doc, bool desc)
+        {
+            doc.Add(this.NameInDatabase, desc ? -1 : 1);
         }
 
         #region IPropertyPredicateOperator members
 
-        void IPropertyPredicateOperator.PutEqualPredicate(Document doc, object value)
+        void IPropertyPredicateOperator.PutEqualPredicate(QueryDocument doc, object value)
         {
-            var name = this.DatabaseName;
+            var name = this.NameInDatabase;
             if (doc.Contains(name))
             {
                 throw new InvalidOperationException(
@@ -183,76 +188,71 @@ namespace EasyMongo
                         "this document should not contain {0} field.", name));
             }
 
-            doc.Append(name, this.TypeProcessor.ToDocumentValue(value));
+            doc.Add(name, this.TypeProcessor.ToBsonValue(value));
         }
 
-        void IPropertyPredicateOperator.PutNotEqualPredicate(Document doc, object value)
+        void IPropertyPredicateOperator.PutNotEqualPredicate(QueryDocument doc, object value)
         {
             this.PutInnerPredicate(doc, "$ne", value);
         }
 
-        private void PutInnerPredicate(Document doc, string op, object value)
+        private void PutInnerPredicate(QueryDocument doc, string op, object value)
         {
-            var name = this.DatabaseName;
-            Document innerDoc;
+            var name = this.NameInDatabase;
+            BsonDocument innerDoc;
 
             if (doc.Contains(name))
             {
-                innerDoc = doc[name] as Document;
+                innerDoc = doc[name] as BsonDocument;
                 if (innerDoc == null)
                 {
-                    throw new InvalidOperationException("Should have nothing or Document object");
+                    throw new InvalidOperationException("Should have nothing or BsonDocument object");
                 }
             }
             else
             {
-                innerDoc = new Document();
-                doc.Append(name, innerDoc);
+                innerDoc = new BsonDocument();
+                doc.Add(name, innerDoc);
             }
 
-            innerDoc.Append(op, this.TypeProcessor.ToDocumentValue(value));
+            innerDoc.Add(op, this.TypeProcessor.ToBsonValue(value));
         }
 
-        void IPropertyPredicateOperator.PutGreaterThanPredicate(Document doc, object value)
+        void IPropertyPredicateOperator.PutGreaterThanPredicate(QueryDocument doc, object value)
         {
             this.PutInnerPredicate(doc, "$gt", value);
         }
 
-        void IPropertyPredicateOperator.PutGreaterThanOrEqualPredicate(Document doc, object value)
+        void IPropertyPredicateOperator.PutGreaterThanOrEqualPredicate(QueryDocument doc, object value)
         {
             this.PutInnerPredicate(doc, "$gte", value);
         }
 
-        void IPropertyPredicateOperator.PutLessThanPredicate(Document doc, object value)
+        void IPropertyPredicateOperator.PutLessThanPredicate(QueryDocument doc, object value)
         {
             this.PutInnerPredicate(doc, "$lt", value);
         }
 
-        void IPropertyPredicateOperator.PutLessThanOrEqualPredicate(Document doc, object value)
+        void IPropertyPredicateOperator.PutLessThanOrEqualPredicate(QueryDocument doc, object value)
         {
             this.PutInnerPredicate(doc, "$lte", value);
         }
 
-        void IPropertyPredicateOperator.PutContainsPredicate(Document doc, object value)
+        void IPropertyPredicateOperator.PutContainsPredicate(QueryDocument doc, object value)
         {
-            var arrayProcessor = this.TypeProcessor as ArrayProcessor;
-            if (arrayProcessor != null) 
+            var arrayProcessor = this.TypeProcessor as IArrayProcessor;
+            if (arrayProcessor == null)
             {
-                value = arrayProcessor.Create(value);
+                throw new NotSupportedException("Only IArrayProcessor instance support Contains predicate.");
             }
 
-            var array = (Array)this.TypeProcessor.ToDocumentValue(value);
-            if (array.Length != 1)
-            {
-                throw new NotSupportedException("Noly support one single element in Constains method");
-            }
-
-            doc.Append(this.DatabaseName, array.GetValue(0));
+            var containingValue = arrayProcessor.GetContainingValue(value);
+            doc.Add(this.NameInDatabase, containingValue);
         }
 
-        void IPropertyPredicateOperator.PutContainedInPredicate(Document doc, IEnumerable<object> collection)
+        void IPropertyPredicateOperator.PutInPredicate(QueryDocument doc, IEnumerable<object> collection)
         {
-            var name = this.DatabaseName;
+            var name = this.NameInDatabase;
             if (doc.Contains(name))
             {
                 throw new InvalidOperationException(
@@ -260,13 +260,19 @@ namespace EasyMongo
                         "this document should not contain {0} field.", name));
             }
 
-            var array = collection.Select(this.TypeProcessor.ToDocumentValue).ToArray();
-            doc.Append(name, new Document().Append("$in", array));
+            var array = new BsonArray();
+            foreach (var item in collection)
+            {
+                var value = this.TypeProcessor.ToBsonValue(item);
+                array.Add(value);
+            }
+
+            doc.Add(name, new BsonDocument().Add("$in", array));
         }
 
-        void IPropertyPredicateOperator.PutRegexMatchPredicate(Document doc, string expression, string options)
+        void IPropertyPredicateOperator.PutRegexMatchPredicate(QueryDocument doc, string expression, string options)
         {
-            var name = this.DatabaseName;
+            var name = this.NameInDatabase;
             if (doc.Contains(name))
             {
                 throw new InvalidOperationException(
@@ -274,53 +280,47 @@ namespace EasyMongo
                         "this document should not contain {0} field.", name));
             }
 
-            doc.Append(name, new MongoRegex(expression, options));
+            doc.Add(name, new BsonRegularExpression(expression, options));
         }
 
         #endregion
 
         #region IPropertyUpdateOperator members
 
-        void IPropertyUpdateOperator.PutConstantUpdate(Document doc, object value)
+        void IPropertyUpdateOperator.PutConstantUpdate(BsonDocument doc, object value)
         {
-            this.AppendOperation(doc, "$set", this.TypeProcessor.ToDocumentValue(value));
+            this.AppendOperation(doc, "$set", this.TypeProcessor.ToBsonValue(value));
         }
 
-        void IPropertyUpdateOperator.PutAddUpdate(Document doc, object value)
+        void IPropertyUpdateOperator.PutAddUpdate(BsonDocument doc, object value)
         {
-            this.AppendOperation(doc, "$inc", this.TypeProcessor.ToDocumentValue(value));
+            this.AppendOperation(doc, "$inc", this.TypeProcessor.ToBsonValue(value));
         }
 
-        void IPropertyUpdateOperator.PutSubtractUpdate(Document doc, object value)
+        //private object CreateArray(IEnumerable<object> items)
+        //{
+        //    var array = (IList)Activator.CreateInstance(this.Descriptor.Property.PropertyType);
+        //    foreach (var e in items) array.Add(e);
+        //    return array;
+        //}
+
+        private BsonArray CreateArray(IEnumerable<object> items)
         {
-            ((IPropertyUpdateOperator)this).PutAddUpdate(doc, -(int)value);
+            var arrayProcessor = this.TypeProcessor as ArrayProcessor;
+            if (arrayProcessor == null) throw new NotSupportedException();
+            return arrayProcessor.GetValues(items);
         }
 
-        private object CreateArray(IEnumerable<object> items)
+        void IPropertyUpdateOperator.PutPushUpdate(BsonDocument doc, IEnumerable<object> items)
         {
-            var array = (IList)Activator.CreateInstance(this.Descriptor.Property.PropertyType);
-            foreach (var e in items) array.Add(e);
-            return array;
+            this.AppendOperation(doc, "$push", this.CreateArray(items));
         }
 
-        void IPropertyUpdateOperator.PutPushUpdate(Document doc, IEnumerable<object> items)
+        void IPropertyUpdateOperator.PutAddToSetUpdate(BsonDocument doc, IEnumerable<object> items)
         {
-            var array = this.CreateArray(items);
-            this.AppendOperation(doc, "$push", this.TypeProcessor.ToDocumentValue(array));
+            this.AppendOperation(doc, "$addToSet", new BsonDocument().Add("$each", this.CreateArray(items)));
         }
-
-        void IPropertyUpdateOperator.PutAddToSetUpdate(Document doc, IEnumerable<object> items)
-        {
-            var array = this.CreateArray(items);
-            this.AppendOperation(doc, "$addToSet", new Document().Append("$each", this.TypeProcessor.ToDocumentValue(items)));
-        }
-
 
         #endregion
-
-        internal void PutHint(Document doc, bool desc)
-        {
-            doc.Append(this.DatabaseName, desc ? -1 : 1);
-        }
     }
 }

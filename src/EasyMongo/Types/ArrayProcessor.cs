@@ -5,6 +5,7 @@ using System.Text;
 using System.Reflection;
 using System.Collections;
 using MongoDB.Driver;
+using MongoDB.Bson;
 
 namespace EasyMongo.Types
 {
@@ -17,20 +18,24 @@ namespace EasyMongo.Types
 
         public PropertyInfo Property { get; private set; }
 
-        public object ToDocumentValue(object value)
+        public BsonValue ToBsonValue(object value)
         {
             if (value == null) return null;
-            return ((IList)value).Cast<object>().ToArray();
+            return new BsonArray(((IEnumerable)value).Cast<object>());
         }
 
-        public object FromDocumentValue(object docValue)
+        public object FromBsonValue(BsonValue bsonValue)
         {
-            if (docValue == null) return null;
+            if (bsonValue.IsBsonNull) return null;
 
             var array = (IList)Activator.CreateInstance(this.Property.PropertyType);
-            if (docValue is Document) return array;
+            var bsonArray = bsonValue as BsonArray;
 
-            foreach (var item in (IEnumerable)docValue) array.Add(item);
+            if (bsonArray != null)
+            {
+                foreach (var item in bsonArray.RawValues) array.Add(item);
+            }
+
             return array;
         }
 
@@ -66,21 +71,24 @@ namespace EasyMongo.Types
             return originalArray.Items.Count != currentArray.Items.Count;
         }
 
-        public object[] GetItemsToPush(object originalState, object currentState)
+        public BsonArray GetPushingValues(object originalState, object currentState)
         {
             var originalArray = (ArrayState)originalState;
             var currentArray = (ArrayState)currentState;
 
             if (!Object.ReferenceEquals(originalArray.Container, currentArray.Container)) return null;
 
-            return currentArray.Items.Skip(originalArray.Items.Count).ToArray();
+            return new BsonArray(currentArray.Items.Skip(originalArray.Items.Count).ToArray());
         }
 
-        public object Create(params object[] items)
+        public BsonArray GetValues(IEnumerable<object> items)
         {
-            var array = (IList)Activator.CreateInstance(this.Property.PropertyType);
-            foreach (var i in items) array.Add(i);
-            return array;
+            return new BsonArray(items);
+        }
+
+        public BsonValue GetContainingValue(object value)
+        {
+            return BsonValue.Create(value);
         }
 
         public object FromStateValue(object stateValue)

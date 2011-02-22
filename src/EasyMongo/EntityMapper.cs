@@ -6,14 +6,13 @@ using MongoDB.Driver;
 using System.Linq.Expressions;
 using System.Reflection;
 using EasyMongo.Reflection;
+using MongoDB.Bson;
 
 namespace EasyMongo
 {
-    internal class EntityMapper
+    internal class EntityMapper<TEntity> where TEntity : class, new()
     {
-
-
-        public EntityMapper(IEntityDescriptor descriptor)
+        public EntityMapper(IEntityDescriptor<TEntity> descriptor)
         {
             this.Descriptor = descriptor;
 
@@ -32,26 +31,23 @@ namespace EasyMongo
             this.m_identities = this.m_properties.Values
                 .Where(m => m.Descriptor.IsIdentity)
                 .ToDictionary(p => p.Descriptor.Property);
-
-            this.Factory = new EntityFactory(this.Descriptor.Type);
         }
 
         private Dictionary<PropertyInfo, PropertyMapper> m_properties;
         private Dictionary<PropertyInfo, PropertyMapper> m_identities;
 
-        public IEntityDescriptor Descriptor { get; private set; }
-        public EntityFactory Factory { get; private set; }
+        public IEntityDescriptor<TEntity> Descriptor { get; private set; }
 
-        public IMongoCollection GetCollection(IMongoDatabase database)
+        public MongoCollection<BsonDocument> GetCollection(MongoDatabase database)
         {
-            return database[this.Descriptor.CollectionName];
+            return database.GetCollection(this.Descriptor.CollectionName);
         }
 
-        public Document GetPredicate(Expression predicateExpr)
+        public QueryDocument GetPredicate(Expression predicateExpr)
         {
             var propPredicates = new PredicateCollector().Collect(predicateExpr);
 
-            var predicateDoc = new Document();
+            var predicateDoc = new QueryDocument();
             foreach (var predicate in propPredicates)
             {
                 var propertyMapper = this.m_properties[predicate.Property];
@@ -61,20 +57,20 @@ namespace EasyMongo
             return predicateDoc;
         }
 
-        public Document GetDocument(object entity)
+        public BsonDocument GetDocument(TEntity entity)
         {
-            var doc = new Document();
+            var doc = new BsonDocument();
             foreach (var mapper in this.m_properties.Values)
-            { 
+            {
                 mapper.PutValue(doc, entity);
             }
 
             return doc;
         }
 
-        public Document GetFields(Expression selector)
+        public FieldsDocument GetFields(Expression selector)
         {
-            var doc = new Document();
+            var doc = new FieldsDocument();
 
             if (selector == null)
             {
@@ -118,9 +114,9 @@ namespace EasyMongo
             return doc;
         }
 
-        public EntityState GetEntityState(object entity)
+        public EntityState GetEntityState(TEntity entity)
         {
-            var state = new EntityState(this);
+            var state = new EntityState();
             foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
             {
                 mapper.PutState(state, entity);
@@ -129,9 +125,9 @@ namespace EasyMongo
             return state;
         }
 
-        public Document GetIdentity(object entity)
-        { 
-            var doc = new Document();
+        public QueryDocument GetIdentity(object entity)
+        {
+            var doc = new QueryDocument();
 
             foreach (var mapper in this.m_identities.Values)
             {
@@ -141,9 +137,9 @@ namespace EasyMongo
             return doc;
         }
 
-        public object GetEntity(Document doc)
+        public TEntity GetEntity(BsonDocument doc)
         {
-            var entity = this.Factory.Create();
+            var entity = new TEntity();
             foreach (var mapper in this.m_properties.Values.Where(mp => !mp.IsReadOnly))
             {
                 mapper.SetValue(entity, doc);
@@ -157,9 +153,9 @@ namespace EasyMongo
             return entity;
         }
 
-        public Document GetStateChanged(object entity, EntityState original, EntityState current)
+        public UpdateDocument GetStateChanged(object entity, EntityState original, EntityState current)
         {
-            var result = new Document();
+            var result = new UpdateDocument();
             var changedSet = new HashSet<PropertyInfo>();
 
             foreach (var mapper in this.m_properties.Values.Where(p => !p.IsReadOnly))
@@ -182,9 +178,9 @@ namespace EasyMongo
             return result;
         }
 
-        public Document GetSortOrders(List<SortOrder> sortOrders)
+        public SortByDocument GetSortOrders(List<SortOrder> sortOrders)
         {
-            Document result = new Document();
+            var result = new SortByDocument();
 
             foreach (var order in sortOrders)
             {
@@ -196,11 +192,11 @@ namespace EasyMongo
             return result;
         }
 
-        public Document GetUpdate(Expression updateExpr)
+        public UpdateDocument GetUpdate(Expression updateExpr)
         {
             var propUpdates = new UpdateCollector().Collect(updateExpr);
 
-            var updateDoc = new Document();
+            var updateDoc = new UpdateDocument();
             foreach (var update in propUpdates)
             {
                 var propertyMapper = this.m_properties[update.Property];
@@ -210,9 +206,9 @@ namespace EasyMongo
             return updateDoc;
         }
 
-        public Document GetHints(List<QueryHint> hints)
+        public BsonDocument GetHints(List<QueryHint> hints)
         {
-            Document result = new Document();
+            var result = new BsonDocument();
 
             foreach (var h in hints)
             {

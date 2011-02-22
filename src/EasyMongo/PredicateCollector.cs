@@ -29,7 +29,7 @@ namespace EasyMongo
             switch (m.Method.Name)
             {
                 case "Contains":
-                case "ContainedIn":
+                case "In":
                 case "Matches":
                     this.m_predicates.Add(new MethodCallPredicate(m));
                     break;

@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MongoDB.Bson;
 
 namespace EasyMongo.Types
 {
     internal interface IArrayProcessor : ITypeProcessor
     {
-        object[] GetItemsToPush(object originalState, object currentState);
-        object Create(params object[] items);
+        BsonArray GetPushingValues(object originalState, object currentState);
+
+        BsonArray GetValues(IEnumerable<object> items);
+
+        BsonValue GetContainingValue(object value);
     }
 }

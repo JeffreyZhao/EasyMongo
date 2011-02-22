@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Linq.Expressions;
 using MongoDB.Driver;
 using System.Diagnostics;
+using MongoDB.Bson;
 
 namespace EasyMongo
 {
@@ -34,7 +35,7 @@ namespace EasyMongo
         public object Constant { get; private set; }
         public ExpressionType OpType { get; private set; }
 
-        public void Fill(IPropertyUpdateOperator optr, Document doc)
+        public void Fill(IPropertyUpdateOperator optr, BsonDocument doc)
         {
             switch (this.OpType)
             {
@@ -42,11 +43,20 @@ namespace EasyMongo
                     optr.PutAddUpdate(doc, this.Constant);
                     break;
                 case ExpressionType.Subtract:
-                    optr.PutSubtractUpdate(doc, this.Constant);
+                    optr.PutAddUpdate(doc, GetContrary(this.Constant));
                     break;
                 default:
                     throw new NotSupportedException(this.OpType + " is not supported");
             }
+        }
+
+        public object GetContrary(object value)
+        {
+            if (value is int) return -(int)value;
+            if (value is float) return -(float)value;
+            if (value is double) return -(double)value;
+
+            throw new NotSupportedException();
         }
 
         private static ExpressionType GetSupportedOpType(ExpressionType type)

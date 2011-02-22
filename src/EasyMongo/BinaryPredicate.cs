@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using System.Linq.Expressions;
 using System.Reflection;
 using EasyMongo.Expressions;
+using MongoDB.Bson;
 
 namespace EasyMongo
 {
@@ -71,7 +72,7 @@ namespace EasyMongo
         public object Constant { get; private set; }
         public ExpressionType OpType { get; private set; }
 
-        public void Fill(IPropertyPredicateOperator optr, Document doc)
+        public void Fill(IPropertyPredicateOperator optr, QueryDocument doc)
         {
             switch (this.OpType)
             {
