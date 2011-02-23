@@ -56,7 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\EasyMongo\EasyMongo.csproj">
-      <Project>{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}</Project>
+      <Project>{C085168F-683C-406B-B28A-198DF0239844}</Project>
       <Name>EasyMongo</Name>
     </ProjectReference>
   </ItemGroup>

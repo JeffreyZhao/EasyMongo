@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{2D808671-D5D5-4A7F-B5D5-B0AF8A05044A}</ProjectGuid>
+    <ProjectGuid>{C085168F-683C-406B-B28A-198DF0239844}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>EasyMongo</RootNamespace>
@@ -50,6 +50,7 @@
     <Compile Include="BinaryUpdate.cs" />
     <Compile Include="ConstantUpdate.cs" />
     <Compile Include="EntityCollection.cs" />
+    <Compile Include="EntityMapperCache.cs" />
     <Compile Include="Expressions\ExpressionExtensions.cs" />
     <Compile Include="Expressions\ExpressionVisitor.cs" />
     <Compile Include="Expressions\PartialEvaluator.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="Query.cs" />
     <Compile Include="QueryExtensions.cs" />
     <Compile Include="QueryInterfaces.cs" />
+    <Compile Include="ReadWriteCache.cs" />
     <Compile Include="Reflection\PropertyAccessor.cs" />
     <Compile Include="SortOrder.cs" />
     <Compile Include="Types\ArrayProcessor.cs" />

@@ -24,6 +24,8 @@ namespace EasyMongo.Mapping
 
         public Func<ITypeProcessor> TypeProcessorFactory { get; set; }
 
+        public bool IsVersion { get; set; }
+
         public object GetDefaultValue()
         {
             return this.DefaultValueFactory.Invoke();

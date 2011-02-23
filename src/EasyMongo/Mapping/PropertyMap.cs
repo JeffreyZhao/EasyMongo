@@ -19,6 +19,7 @@ namespace EasyMongo.Mapping
             this.m_hasDefaultValue = false;
             this.m_defaultValueFactory = null;
             this.m_changeWithProperties = new List<PropertyInfo>();
+            this.m_isVersion = false;
         }
 
         private bool m_isIdentity;
@@ -27,6 +28,7 @@ namespace EasyMongo.Mapping
         private Func<object> m_defaultValueFactory;
         private Func<ITypeProcessor> m_typeProcessorFactory;
         private List<PropertyInfo> m_changeWithProperties;
+        private bool m_isVersion;
 
         public PropertyInfo Property { get; private set; }
 
@@ -68,6 +70,12 @@ namespace EasyMongo.Mapping
             return this;
         }
 
+        public PropertyMap<TEntity, TProperty> Version()
+        {
+            this.m_isVersion = true;
+            return this;
+        }
+
         IPropertyDescriptor IPropertyMap.ToDescriptor()
         {
             return new PropertyDescriptor
@@ -78,7 +86,8 @@ namespace EasyMongo.Mapping
                 Name = this.m_name ?? this.Property.Name,
                 Property = this.Property,
                 ChangeWithProperties = new ReadOnlyCollection<PropertyInfo>(this.m_changeWithProperties),
-                TypeProcessorFactory = this.m_typeProcessorFactory ?? (() => null)
+                TypeProcessorFactory = this.m_typeProcessorFactory ?? (() => null),
+                IsVersion = this.m_isVersion
             };
         }
     }

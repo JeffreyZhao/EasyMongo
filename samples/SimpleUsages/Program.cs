@@ -14,27 +14,27 @@ namespace SimpleUsages
         {
             var settings = new MongoServerSettings
             {
-                Server = new MongoServerAddress("127.0.0.1", 27017)
+                Server = new MongoServerAddress("127.0.0.1", 27017),
+                SafeMode = SafeMode.False
             };
             var mongoServer = new MongoServer(settings);
-            // mongoServer.Connect();
             
-            var database = mongoServer.GetDatabase("Partition_1");
+            var database = mongoServer.GetDatabase("Test");
 
             var map = new NoteMap();
             var collection = new EntityCollection<Note>(database, map.GetDescriptor(), true);
 
-            Console.WriteLine(collection.Count(n => n.ContentTypes.Contains(NoteContentTypes.Image)));
+            //var note = new Note
+            //{
+            //    NoteID = "1",
+            //    Title = "This is a book.",
+            //    Content = "Oh yeah",
+            //};
+            //collection.InsertOnSubmit(note);
 
-            //var note = collection.Get(n => n.Types.Contains(NoteTypes.Image));
-            //note.Title = "是啊是啊";
-            //note.Types = NoteTypes.Image;
-            //note.Priority = NotePriority.Normal;
-            //note.Tags.Add("World");
-            //collection.SubmitChanges();
-
-            //collection.DeleteOnSubmit(note);
-            //collection.SubmitChanges();
+            var note = collection.Get(n => n.NoteID == "1");
+            note.Title = "This is a book!!!";
+            collection.SubmitChanges();
 
             Console.WriteLine("Finished");
             Console.ReadLine();

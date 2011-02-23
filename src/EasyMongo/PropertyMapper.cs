@@ -63,7 +63,7 @@ namespace EasyMongo
             get
             {
                 var descriptor = this.Descriptor;
-                return descriptor.IsIdentity || descriptor.ChangeWithProperties.Count > 0;
+                return descriptor.IsIdentity || descriptor.IsVersion || descriptor.ChangeWithProperties.Count > 0;
             }
         }
 
@@ -174,6 +174,80 @@ namespace EasyMongo
         public void PutHint(BsonDocument doc, bool desc)
         {
             doc.Add(this.NameInDatabase, desc ? -1 : 1);
+        }
+
+        public void PutDefaultVersion(BsonDocument doc)
+        {
+            BsonValue value;
+
+            var type = this.Descriptor.Property.PropertyType;
+            if (type == typeof(int))
+            { 
+                value = new BsonInt32(0);
+            }
+            else if (type == typeof(long))
+            {
+                value = new BsonInt64(0);
+            }
+            else if (type == typeof(DateTime))
+            {
+                value = new BsonDateTime(DateTime.UtcNow);
+            }
+            else
+            {
+                throw new NotSupportedException(String.Format("Don't support type {0} as version.", type));
+            }
+
+            doc.Add(this.NameInDatabase, value);
+        }
+
+        public void PutVersionUpdate(BsonDocument updateDoc)
+        {
+            var optr = (IPropertyUpdateOperator)this;
+
+            var type = this.Descriptor.Property.PropertyType;
+            if (type == typeof(int))
+            {
+                optr.PutAddUpdate(updateDoc, 1);
+            }
+            else if (type == typeof(long))
+            {
+                optr.PutAddUpdate(updateDoc, 1L);
+            }
+            else if (type == typeof(DateTime))
+            {
+                optr.PutAddUpdate(updateDoc, DateTime.UtcNow);
+            }
+            else
+            {
+                throw new NotSupportedException(String.Format("Don't support type {0} as version.", type));
+            }
+        }
+
+        public void UpdateVersion(object entity)
+        {
+            var version = this.Accessor.GetValue(entity);
+            object nextVersion;
+
+            var type = this.Descriptor.Property.PropertyType;
+            if (type == typeof(int))
+            {
+                nextVersion = (int)version + 1;
+            }
+            else if (type == typeof(long))
+            {
+                nextVersion = (long)version + 1;
+            }
+            else if (type == typeof(DateTime))
+            {
+                nextVersion = DateTime.UtcNow;
+            }
+            else
+            {
+                throw new NotSupportedException(String.Format("Don't support type {0} as version.", type));
+            }
+
+            this.Accessor.SetValue(entity, nextVersion);
         }
 
         #region IPropertyPredicateOperator members

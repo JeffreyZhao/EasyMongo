@@ -13,6 +13,8 @@ namespace SimpleUsages
 
         public string Content { get; set; }
 
+        public int Version { get; set; }
+
         public long UserID { get; set; }
 
         public string CategoryID { get; set; }

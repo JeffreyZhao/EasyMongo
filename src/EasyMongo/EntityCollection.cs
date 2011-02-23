@@ -11,13 +11,15 @@ namespace EasyMongo
 {
     public class EntityCollection<TEntity> : ICountableQueryableCollection<TEntity> where TEntity : class, new()
     {
+        private static EntityMapperCache<TEntity> s_mapperCache = new EntityMapperCache<TEntity>();
+
         public EntityCollection(MongoDatabase database, IEntityDescriptor<TEntity> descriptor, bool entityTrackingEnabled)
         {
             this.Descriptor = descriptor;
             this.Database = database;
             this.EntityTrackingEnabled = entityTrackingEnabled;
 
-            this.m_mapper = new EntityMapper<TEntity>(descriptor);
+            this.m_mapper = s_mapperCache.Get(descriptor);
         }
 
         public bool EntityTrackingEnabled { get; private set; }
@@ -36,7 +38,7 @@ namespace EasyMongo
             var fieldsDoc = mapper.GetFields(null);
             var collection = mapper.GetCollection(this.Database);
 
-            var doc = collection.Find(predicateDoc).SetFields(fieldsDoc).FirstOrDefault();
+            var doc = collection.Find(predicateDoc).SetFields(fieldsDoc).SetLimit(1).FirstOrDefault();
             if (doc == null) return default(TEntity);
 
             var entity = mapper.GetEntity(doc);
@@ -98,7 +100,7 @@ namespace EasyMongo
         {
             var mapper = this.m_mapper;
 
-            var updateDoc = mapper.GetUpdate(updateSpec.Body);
+            var updateDoc = mapper.GetUpdates(updateSpec.Body);
             var predicateDoc = mapper.GetPredicate(predicate.Body);
             var collection = mapper.GetCollection(this.Database);
 
@@ -125,6 +127,8 @@ namespace EasyMongo
         {
             if (this.m_stateLoaded == null) return;
 
+            var updateResults = new Dictionary<TEntity, SafeModeResult>(this.m_stateLoaded.Count);
+
             foreach (var pair in this.m_stateLoaded.ToList())
             {
                 var entity = pair.Key;
@@ -132,16 +136,36 @@ namespace EasyMongo
                 var mapper = this.m_mapper;
 
                 var currentState = mapper.GetEntityState(entity);
-
                 var updateDoc = mapper.GetStateChanged(entity, originalState, currentState);
                 if (updateDoc.ElementCount == 0) continue;
 
-                var predicateDoc = mapper.GetIdentity(entity);
+                var identityDoc = mapper.GetIdentity(entity);
+                if (mapper.Versioning)
+                {
+                    mapper.UpdateVersion(entity);
+                    mapper.SetVersionCondition(updateDoc, entity);
+                }
+                
                 var collection = mapper.GetCollection(this.Database);
 
-                collection.Update(predicateDoc, updateDoc);
+                if (mapper.Versioning)
+                {
+                    updateResults.Add(entity, collection.Update(identityDoc, updateDoc, SafeMode.True));
+                }
+                else
+                {
+                    collection.Update(identityDoc, updateDoc);
+                }
 
                 this.m_stateLoaded[entity] = currentState;
+            }
+
+            foreach (var pair in updateResults)
+            {
+                if (!pair.Value.UpdatedExisting)
+                { 
+
+                }
             }
         }
 

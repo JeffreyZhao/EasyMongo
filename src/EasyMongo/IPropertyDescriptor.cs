@@ -23,5 +23,7 @@ namespace EasyMongo
         bool IsIdentity { get; }
 
         ReadOnlyCollection<PropertyInfo> ChangeWithProperties { get; }
+
+        bool IsVersion { get; }
     }
 }
