@@ -31,7 +31,7 @@ namespace SimpleUsages.Mapping
             //Property(n => n.PasswordReminder).DefaultValue("");
             //Property(n => n.Password).DefaultValue("");
             //Property(n => n.ResourceInlineStatus).DefaultValue(NoteResourceInlineStatus.Original);
-            //Property(n => n.Version).Version();
+            Property(n => n.Version).Version();
         }
     }
 }

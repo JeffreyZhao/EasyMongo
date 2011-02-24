@@ -127,7 +127,7 @@ namespace EasyMongo
         {
             if (this.m_stateLoaded == null) return;
 
-            var updateResults = new Dictionary<TEntity, SafeModeResult>(this.m_stateLoaded.Count);
+            var conflicts = new List<TEntity>();
 
             foreach (var pair in this.m_stateLoaded.ToList())
             {
@@ -139,18 +139,22 @@ namespace EasyMongo
                 var updateDoc = mapper.GetStateChanged(entity, originalState, currentState);
                 if (updateDoc.ElementCount == 0) continue;
 
-                var identityDoc = mapper.GetIdentity(entity);
-                if (mapper.Versioning)
-                {
-                    mapper.UpdateVersion(entity);
-                    mapper.SetVersionCondition(updateDoc, entity);
-                }
-                
+                var identityDoc = mapper.GetIdentity(entity);                
                 var collection = mapper.GetCollection(this.Database);
 
                 if (mapper.Versioning)
                 {
-                    updateResults.Add(entity, collection.Update(identityDoc, updateDoc, SafeMode.True));
+                    var fieldsDoc = mapper.GetVersionField();
+
+                    try
+                    {
+                        var result = collection.FindAndModify(identityDoc, null, updateDoc, fieldsDoc, true);
+                        mapper.UpdateVersion(entity, result.ModifiedDocument);
+                    }
+                    catch (MongoCommandException)
+                    {
+                        conflicts.Add(entity);
+                    }
                 }
                 else
                 {
@@ -160,12 +164,9 @@ namespace EasyMongo
                 this.m_stateLoaded[entity] = currentState;
             }
 
-            foreach (var pair in updateResults)
-            {
-                if (!pair.Value.UpdatedExisting)
-                { 
-
-                }
+            if (conflicts.Count > 0)
+            { 
+                throw new ChangeConflictException<TEntity>(conflicts);
             }
         }
 
@@ -173,14 +174,26 @@ namespace EasyMongo
         {
             if (this.m_itemsToDelete == null) return;
 
+            var conflicts = new List<TEntity>();
+
             foreach (var entity in this.m_itemsToDelete)
             {
                 var identityDoc = this.m_mapper.GetIdentity(entity);
                 var collection = this.m_mapper.GetCollection(this.Database);
-                collection.Remove(identityDoc, RemoveFlags.Single);
+                
+                var result = collection.Remove(identityDoc, RemoveFlags.Single, SafeMode.True);
+                if (result.DocumentsAffected <= 0)
+                {
+                    conflicts.Add(entity);
+                }
             }
 
-            this.m_itemsToDelete = null;
+            this.m_itemsToDelete.RemoveAll(e => conflicts.Contains(e));
+
+            if (conflicts.Count > 0)
+            {
+                throw new ChangeConflictException<TEntity>(conflicts);
+            }
         }
 
         private void TrackEntityState(TEntity entity)

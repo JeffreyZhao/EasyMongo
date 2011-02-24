@@ -189,7 +189,7 @@ namespace EasyMongo
 
         public UpdateDocument GetStateChanged(object entity, EntityState original, EntityState current)
         {
-            var result = new UpdateDocument();
+            var updateDoc = new UpdateDocument();
             var changedSet = new HashSet<PropertyInfo>();
 
             foreach (var mapper in this.m_allProperties.Values.Where(p => !p.IsReadOnly))
@@ -197,7 +197,7 @@ namespace EasyMongo
                 if (mapper.IsStateChanged(original, current))
                 {
                     changedSet.Add(mapper.Descriptor.Property);
-                    mapper.PutStateUpdate(result, original, current);
+                    mapper.PutStateUpdate(updateDoc, original, current);
                 }
             }
 
@@ -205,11 +205,16 @@ namespace EasyMongo
             {
                 if (mapper.Descriptor.ChangeWithProperties.Any(p => changedSet.Contains(p)))
                 {
-                    mapper.PutValueUpdate(result, entity);
+                    mapper.PutValueUpdate(updateDoc, entity);
                 }
             }
 
-            return result;
+            if (this.m_version != null && updateDoc.ElementCount > 0)
+            {
+                this.m_version.PutNextVersion(updateDoc, entity);
+            }
+
+            return updateDoc;
         }
 
         public SortByDocument GetSortOrders(List<SortOrder> sortOrders)
@@ -259,14 +264,17 @@ namespace EasyMongo
             return result;
         }
 
-        public void UpdateVersion(object entity)
-        {
-            this.m_version.UpdateVersion(entity);
+        public FieldsDocument GetVersionField()
+        { 
+            var fieldsDoc = new FieldsDocument();
+            this.m_version.PutField(fieldsDoc, true);
+            return fieldsDoc;
         }
 
-        public void SetVersionCondition(BsonDocument updateDoc, object entity)
+
+        internal void UpdateVersion(object entity, BsonDocument sourceDoc)
         {
-            this.m_version.PutValueUpdate(updateDoc, entity);
+            this.m_version.SetValue(entity, sourceDoc);
         }
     }
 }

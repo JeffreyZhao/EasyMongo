@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="BinaryPredicate.cs" />
     <Compile Include="BinaryUpdate.cs" />
+    <Compile Include="ChangeConflictException.cs" />
     <Compile Include="ConstantUpdate.cs" />
     <Compile Include="EntityCollection.cs" />
     <Compile Include="EntityMapperCache.cs" />

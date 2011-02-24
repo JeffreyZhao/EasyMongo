@@ -33,8 +33,16 @@ namespace SimpleUsages
             //collection.InsertOnSubmit(note);
 
             var note = collection.Get(n => n.NoteID == "1");
-            note.Title = "This is a book!!!";
-            collection.SubmitChanges();
+            note.Title = "This is a book!";
+
+            try
+            {
+                collection.SubmitChanges();
+            }
+            catch (ChangeConflictException<Note> ex)
+            {
+                Console.WriteLine(ex.StackTrace);
+            }
 
             Console.WriteLine("Finished");
             Console.ReadLine();

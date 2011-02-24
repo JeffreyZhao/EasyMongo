@@ -201,30 +201,7 @@ namespace EasyMongo
             doc.Add(this.NameInDatabase, value);
         }
 
-        public void PutVersionUpdate(BsonDocument updateDoc)
-        {
-            var optr = (IPropertyUpdateOperator)this;
-
-            var type = this.Descriptor.Property.PropertyType;
-            if (type == typeof(int))
-            {
-                optr.PutAddUpdate(updateDoc, 1);
-            }
-            else if (type == typeof(long))
-            {
-                optr.PutAddUpdate(updateDoc, 1L);
-            }
-            else if (type == typeof(DateTime))
-            {
-                optr.PutAddUpdate(updateDoc, DateTime.UtcNow);
-            }
-            else
-            {
-                throw new NotSupportedException(String.Format("Don't support type {0} as version.", type));
-            }
-        }
-
-        public void UpdateVersion(object entity)
+        public void PutNextVersion(UpdateDocument updateDoc, object entity)
         {
             var version = this.Accessor.GetValue(entity);
             object nextVersion;
@@ -247,7 +224,30 @@ namespace EasyMongo
                 throw new NotSupportedException(String.Format("Don't support type {0} as version.", type));
             }
 
-            this.Accessor.SetValue(entity, nextVersion);
+            ((IPropertyUpdateOperator)this).PutConstantUpdate(updateDoc, nextVersion);
+        }
+
+        public void PutVersionUpdate(BsonDocument updateDoc)
+        {
+            var optr = (IPropertyUpdateOperator)this;
+
+            var type = this.Descriptor.Property.PropertyType;
+            if (type == typeof(int))
+            {
+                optr.PutAddUpdate(updateDoc, 1);
+            }
+            else if (type == typeof(long))
+            {
+                optr.PutAddUpdate(updateDoc, 1L);
+            }
+            else if (type == typeof(DateTime))
+            {
+                optr.PutAddUpdate(updateDoc, DateTime.UtcNow);
+            }
+            else
+            {
+                throw new NotSupportedException(String.Format("Don't support type {0} as version.", type));
+            }
         }
 
         #region IPropertyPredicateOperator members
@@ -396,5 +396,6 @@ namespace EasyMongo
         }
 
         #endregion
+
     }
 }
