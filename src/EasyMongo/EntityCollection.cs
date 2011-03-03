@@ -107,6 +107,17 @@ namespace EasyMongo
             collection.Update(predicateDoc, updateDoc);
         }
 
+        public void UpdateVersion(Expression<Func<TEntity, bool>> predicate)
+        {
+            var mapper = this.m_mapper;
+
+            var updateDoc = mapper.GetUpdates(null);
+            var predicateDoc = mapper.GetPredicate(predicate.Body);
+            var collection = mapper.GetCollection(this.Database);
+
+            collection.Update(predicateDoc, updateDoc);
+        }
+
         private void InsertEntities()
         {
             if (this.m_itemsToInsert == null) return;
