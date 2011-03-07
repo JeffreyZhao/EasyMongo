@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using System.Linq.Expressions;
 using MongoDB.Bson;
 using System.Collections;
+using System.IO;
 
 namespace EasyMongo
 {
@@ -22,6 +23,8 @@ namespace EasyMongo
             this.m_mapper = s_mapperCache.Get(descriptor);
         }
 
+        public TextWriter Log { get; set; }
+
         public bool EntityTrackingEnabled { get; private set; }
 
         public MongoDatabase Database { get; private set; }
@@ -37,6 +40,8 @@ namespace EasyMongo
             var predicateDoc = mapper.GetPredicate(predicate.Body);
             var fieldsDoc = mapper.GetFields(null);
             var collection = mapper.GetCollection(this.Database);
+
+            this.Log.WriteQuery(collection, predicateDoc, fieldsDoc, null, null, 0, 1);
 
             var doc = collection.Find(predicateDoc).SetFields(fieldsDoc).SetLimit(1).FirstOrDefault();
             if (doc == null) return default(TEntity);
@@ -169,6 +174,7 @@ namespace EasyMongo
                 }
                 else
                 {
+                    this.Log.WriteUpdate(collection, identityDoc, updateDoc);
                     collection.Update(identityDoc, updateDoc);
                 }
 
@@ -199,7 +205,7 @@ namespace EasyMongo
                 }
             }
 
-            this.m_itemsToDelete.RemoveAll(e => conflicts.Contains(e));
+            this.m_itemsToDelete.RemoveAll(e => !conflicts.Contains(e));
 
             if (conflicts.Count > 0)
             {
@@ -269,19 +275,18 @@ namespace EasyMongo
             var sortDoc = mapper.GetSortOrders(sortOrders);
 
             var collection = mapper.GetCollection(this.Database);
-
+            
             var mongoCursor = collection.Find(predicateDoc).SetFields(fieldsDoc).SetSortOrder(sortDoc).SetSkip(skip);
-
+            
             if (limit.HasValue)
             {
                 mongoCursor = mongoCursor.SetLimit(limit.Value);
             }
 
-            if (hints != null && hints.Count > 0)
-            {
-                var hintsDoc = mapper.GetHints(hints);
-                mongoCursor = mongoCursor.SetHint(hintsDoc);
-            }
+            var hintsDoc = (hints != null && hints.Count > 0) ? mapper.GetHints(hints) : null;
+            if (hintsDoc != null) mongoCursor.SetHint(hintsDoc);
+
+            this.Log.WriteQuery(collection, predicateDoc, fieldsDoc, sortDoc, hintsDoc, skip, limit);
 
             var docList = mongoCursor.ToList();
 

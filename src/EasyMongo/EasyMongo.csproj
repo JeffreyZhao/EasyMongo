@@ -67,6 +67,7 @@
     <Compile Include="IPropertyPredicateOperator.cs" />
     <Compile Include="IPropertyUpdate.cs" />
     <Compile Include="IPropertyUpdateOperator.cs" />
+    <Compile Include="LogExtensions.cs" />
     <Compile Include="Mapping\EntityDescriptor.cs">
       <SubType>Code</SubType>
     </Compile>
