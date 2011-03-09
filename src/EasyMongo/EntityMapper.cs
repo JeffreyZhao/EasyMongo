@@ -72,7 +72,8 @@ namespace EasyMongo
 
             if (this.m_version != null)
             {
-                this.m_version.PutDefaultVersion(doc);
+                // this.m_version.PutDefaultVersion(doc);
+                this.m_version.PutValue(doc, entity);
             }
 
             return doc;
@@ -272,7 +273,7 @@ namespace EasyMongo
         }
 
 
-        internal void UpdateVersion(object entity, BsonDocument sourceDoc)
+        public void UpdateVersion(object entity, BsonDocument sourceDoc)
         {
             this.m_version.SetValue(entity, sourceDoc);
         }
