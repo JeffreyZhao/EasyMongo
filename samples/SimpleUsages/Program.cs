@@ -10,7 +10,7 @@ namespace SimpleUsages
 {
     class Program
     {
-        static void Main(string[] args)
+        private static void Go(long userId)
         {
             var settings = new MongoServerSettings
             {
@@ -18,7 +18,7 @@ namespace SimpleUsages
                 SafeMode = SafeMode.False
             };
             var mongoServer = new MongoServer(settings);
-            
+
             var database = mongoServer.GetDatabase("Test");
 
             var map = new NoteMap();
@@ -32,7 +32,8 @@ namespace SimpleUsages
             //};
             //collection.InsertOnSubmit(note);
 
-            var note = collection.Get(n => n.NoteID == "1");
+            collection.Log = Console.Out;
+            var note = collection.Where(n => n.UserID == userId).ToList().FirstOrDefault();
             note.Title = "This is a book!";
 
             try
@@ -43,6 +44,11 @@ namespace SimpleUsages
             {
                 Console.WriteLine(ex.StackTrace);
             }
+        }
+
+        static void Main(string[] args)
+        {
+            Go(20L);
 
             Console.WriteLine("Finished");
             Console.ReadLine();

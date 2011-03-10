@@ -15,6 +15,7 @@ namespace SimpleUsages.Mapping
             Property(n => n.NoteID).Identity();
             Property(n => n.Title);
             Property(n => n.Content).DefaultValue("");
+            Property(n => n.UserID);
             //Property(n => n.Abstract).DefaultValue("");
             //Property(n => n.UserID);
             //Property(n => n.CategoryID);
