@@ -127,7 +127,7 @@ namespace EasyMongo
         {
             if (this.m_itemsToInsert == null) return;
 
-            var documents = this.m_itemsToInsert.Select(this.m_mapper.GetDocument).ToList();
+            var documents = this.m_itemsToInsert.Select((Func<TEntity, BsonDocument>)this.m_mapper.GetDocument).ToList();
             var collection = this.m_mapper.GetCollection(this.Database);
             collection.InsertBatch(documents);
 
