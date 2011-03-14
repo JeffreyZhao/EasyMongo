@@ -6,7 +6,12 @@ using System.Collections.ObjectModel;
 
 namespace EasyMongo
 {
-    public class ChangeConflictException<TEntity> : Exception
+    public class ChangeConflictException : Exception
+    { 
+
+    }
+
+    public class ChangeConflictException<TEntity> : ChangeConflictException
     {
         public ChangeConflictException(IList<TEntity> conflicts)
         {
