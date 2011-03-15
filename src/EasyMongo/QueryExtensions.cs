@@ -53,6 +53,11 @@ namespace EasyMongo
             return Query<TEntity>.GetQuery(queryable).SelectInternal(selector);
         }
 
+        public static List<TResult> SelectTo<TEntity, TResult>(this IQueryableCollection<TEntity> queryable, Expression<Func<TEntity, TResult>> selector) where TEntity : class, new()
+        {
+            return Query<TEntity>.GetQuery(queryable).SelectToInternal<TResult>(selector);
+        }
+
         public static IQueryableCollection<TEntity> Skip<TEntity>(this IQueryableCollection<TEntity> queryable, int num) where TEntity : class, new()
         {
             return Query<TEntity>.GetQuery(queryable).SkipInternal(num);

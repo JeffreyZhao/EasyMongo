@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using EasyMongo.Reflection;
 using MongoDB.Bson;
+using EasyMongo.Expressions;
 
 namespace EasyMongo
 {
@@ -46,6 +47,14 @@ namespace EasyMongo
         public MongoCollection<BsonDocument> GetCollection(MongoDatabase database)
         {
             return database.GetCollection(this.Descriptor.CollectionName);
+        }
+
+        public PropertyMapper this[PropertyInfo property]
+        {
+            get
+            {
+                return this.m_allProperties[property];
+            }
         }
 
         public QueryDocument GetPredicate(Expression predicateExpr)
@@ -188,6 +197,17 @@ namespace EasyMongo
             return entity;
         }
 
+        public FieldsDocument GetFields(HashSet<PropertyInfo> properties)
+        {
+            var fields = new FieldsDocument();
+            foreach (var p in properties)
+            {
+                this.m_allProperties[p].PutField(fields, true);
+            }
+
+            return fields;
+        }
+
         public UpdateDocument GetStateChanged(object entity, EntityState original, EntityState current)
         {
             var updateDoc = new UpdateDocument();
@@ -276,6 +296,18 @@ namespace EasyMongo
         public void UpdateVersion(object entity, BsonDocument sourceDoc)
         {
             this.m_version.SetValue(entity, sourceDoc);
+        }
+
+        public Dictionary<PropertyInfo, object> GetValues(HashSet<PropertyInfo> properties, BsonDocument bsonValues)
+        {
+            var values = new Dictionary<PropertyInfo, object>();
+
+            foreach (var p in properties)
+            {
+                this.m_allProperties[p].SetValue(values, bsonValues);
+            }
+
+            return values;
         }
     }
 }

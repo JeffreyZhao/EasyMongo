@@ -79,11 +79,6 @@ namespace EasyMongo
             return this;
         }
 
-        public IEnumerable<TProperty> SelectInternal<TProperty>(Expression<Func<TEntity, TProperty>> selector)
-        {
-            throw new NotImplementedException();
-        }
-
         public Query<TEntity> HintInternal<TKey>(Expression<Func<TEntity, TKey>> selector, bool desc)
         {
             this.m_hints.Add(new QueryHint(selector.Body, desc));
@@ -105,6 +100,17 @@ namespace EasyMongo
                 this.m_sortOrders,
                 this.m_hints,
                 this.m_selector);
+        }
+
+        public List<TResult> SelectToInternal<TResult>(Expression<Func<TEntity, TResult>> selector)
+        {
+            return this.m_collection.LoadTo<TResult>(
+                this.m_predicate,
+                this.m_skip,
+                this.m_limit,
+                this.m_sortOrders,
+                this.m_hints,
+                selector.Body);
         }
 
         public IEnumerator<TEntity> GetEnumerator()

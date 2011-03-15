@@ -55,6 +55,7 @@
     <Compile Include="Expressions\ExpressionExtensions.cs" />
     <Compile Include="Expressions\ExpressionVisitor.cs" />
     <Compile Include="Expressions\PartialEvaluator.cs" />
+    <Compile Include="Expressions\PropertyExtractor.cs" />
     <Compile Include="IEntityDescriptor.cs" />
     <Compile Include="EntityMapper.cs">
       <SubType>Code</SubType>

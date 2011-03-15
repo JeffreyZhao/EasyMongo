@@ -7,6 +7,8 @@ using System.Linq.Expressions;
 using MongoDB.Bson;
 using System.Collections;
 using System.IO;
+using System.Reflection;
+using EasyMongo.Expressions;
 
 namespace EasyMongo
 {
@@ -38,7 +40,7 @@ namespace EasyMongo
             var mapper = this.m_mapper;
 
             var predicateDoc = mapper.GetPredicate(predicate.Body);
-            var fieldsDoc = mapper.GetFields(null);
+            var fieldsDoc = mapper.GetFields((Expression)null);
             var collection = mapper.GetCollection(this.Database);
 
             this.Log.WriteQuery(collection, predicateDoc, fieldsDoc, null, null, 0, 1);
@@ -296,6 +298,43 @@ namespace EasyMongo
                 var entity = mapper.GetEntity(doc);
                 this.TrackEntityState(entity);
                 result.Add(entity);
+            }
+
+            return result;
+        }
+
+        internal List<TResult> LoadTo<TResult>(Expression predicate, int skip, int? limit, List<SortOrder> sortOrders, List<QueryHint> hints, Expression selector)
+        {
+            Func<Dictionary<PropertyInfo, object>, TResult> generator;
+            var propertyExtractor = new PropertyExtractor();
+            var properties = propertyExtractor.Extract<TResult>(selector, out generator);
+
+            var mapper = this.m_mapper;
+            var predicateDoc = mapper.GetPredicate(predicate);
+            var fieldsDoc = this.m_mapper.GetFields(properties);
+            var sortDoc = mapper.GetSortOrders(sortOrders);
+
+            var collection = mapper.GetCollection(this.Database);
+
+            var mongoCursor = collection.Find(predicateDoc).SetFields(fieldsDoc).SetSortOrder(sortDoc).SetSkip(skip);
+
+            if (limit.HasValue)
+            {
+                mongoCursor = mongoCursor.SetLimit(limit.Value);
+            }
+
+            var hintsDoc = (hints != null && hints.Count > 0) ? mapper.GetHints(hints) : null;
+            if (hintsDoc != null) mongoCursor.SetHint(hintsDoc);
+
+            this.Log.WriteQuery(collection, predicateDoc, fieldsDoc, sortDoc, hintsDoc, skip, limit);
+
+            var docList = mongoCursor.ToList();
+
+            var result = new List<TResult>(docList.Count);
+            foreach (var doc in docList)
+            {
+                var values = mapper.GetValues(properties, doc);
+                result.Add(generator(values));
             }
 
             return result;

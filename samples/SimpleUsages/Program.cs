@@ -24,26 +24,16 @@ namespace SimpleUsages
             var map = new NoteMap();
             var collection = new EntityCollection<Note>(database, map.GetDescriptor(), true);
 
-            //var note = new Note
-            //{
-            //    NoteID = "1",
-            //    Title = "This is a book.",
-            //    Content = "Oh yeah",
-            //};
-            //collection.InsertOnSubmit(note);
-
-            collection.Log = Console.Out;
-            var note = collection.Where(n => n.UserID == userId).ToList().FirstOrDefault();
-            note.Title = "This is a book!";
-
-            try
+            var note = new Note
             {
-                collection.SubmitChanges();
-            }
-            catch (ChangeConflictException<Note> ex)
-            {
-                Console.WriteLine(ex.StackTrace);
-            }
+                NoteID = "1",
+                Title = "This is a book.",
+                Content = "Oh yeah",
+                UserID = 123321L
+            };
+            // collection.InsertOnSubmit(note);
+            // collection.SubmitChanges();
+            var data = collection.SelectTo(n => new { ID = n.NoteID, UserID = n.UserID });
         }
 
         static void Main(string[] args)

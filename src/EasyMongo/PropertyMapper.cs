@@ -48,7 +48,7 @@ namespace EasyMongo
 
         public bool IsDefaultIdentity { get; private set; }
 
-        public string NameInDatabase
+        public string FieldName
         {
             get
             {
@@ -70,12 +70,12 @@ namespace EasyMongo
         public void PutValue(BsonDocument target, object sourceEntity)
         {
             var value = this.Accessor.GetValue(sourceEntity);
-            target.Add(this.NameInDatabase, this.TypeProcessor.ToBsonValue(value));
+            target.Add(this.FieldName, this.TypeProcessor.ToBsonValue(value));
         }
 
         public void PutField(BsonDocument doc, bool include)
         {
-            var name = this.NameInDatabase;
+            var name = this.FieldName;
             if (!doc.Contains(name))
             {
                 doc.Add(name, include ? 1 : 0);
@@ -91,7 +91,7 @@ namespace EasyMongo
 
         public void SetValue(object targetEntity, BsonDocument sourceDoc)
         {
-            var name = this.NameInDatabase;
+            var name = this.FieldName;
 
             object value;
             if (sourceDoc.Contains(name))
@@ -109,6 +109,28 @@ namespace EasyMongo
             }
 
             this.Accessor.SetValue(targetEntity, value);
+        }
+        
+        public void SetValue(Dictionary<PropertyInfo, object> values, BsonDocument sourceDoc)
+        {
+            var name = this.FieldName;
+
+            object value;
+            if (sourceDoc.Contains(name))
+            {
+                var docValue = sourceDoc[name];
+                value = this.TypeProcessor.FromBsonValue(docValue);
+            }
+            else if (this.Descriptor.HasDefaultValue)
+            {
+                value = this.Descriptor.GetDefaultValue();
+            }
+            else
+            {
+                throw new ArgumentException("Missing the value of " + name);
+            }
+
+            values.Add(this.Descriptor.Property, value);
         }
 
         public bool IsStateChanged(
@@ -163,17 +185,17 @@ namespace EasyMongo
                 doc.Add(op, innerDoc);
             }
 
-            innerDoc.Add(this.NameInDatabase, bsonValue);
+            innerDoc.Add(this.FieldName, bsonValue);
         }
 
         public void PutSortOrder(BsonDocument doc, bool descending)
         {
-            doc.Add(this.NameInDatabase, descending ? -1 : 1);
+            doc.Add(this.FieldName, descending ? -1 : 1);
         }
 
         public void PutHint(BsonDocument doc, bool desc)
         {
-            doc.Add(this.NameInDatabase, desc ? -1 : 1);
+            doc.Add(this.FieldName, desc ? -1 : 1);
         }
 
         public void PutDefaultVersion(BsonDocument doc)
@@ -198,7 +220,7 @@ namespace EasyMongo
                 throw new NotSupportedException(String.Format("Don't support type {0} as version.", type));
             }
 
-            doc.Add(this.NameInDatabase, value);
+            doc.Add(this.FieldName, value);
         }
 
         public void PutNextVersion(UpdateDocument updateDoc, object entity)
@@ -254,7 +276,7 @@ namespace EasyMongo
 
         void IPropertyPredicateOperator.PutEqualPredicate(QueryDocument doc, object value)
         {
-            var name = this.NameInDatabase;
+            var name = this.FieldName;
             if (doc.Contains(name))
             {
                 throw new InvalidOperationException(
@@ -272,7 +294,7 @@ namespace EasyMongo
 
         private void PutInnerPredicate(QueryDocument doc, string op, object value)
         {
-            var name = this.NameInDatabase;
+            var name = this.FieldName;
             BsonDocument innerDoc;
 
             if (doc.Contains(name))
@@ -321,12 +343,12 @@ namespace EasyMongo
             }
 
             var containingValue = arrayProcessor.GetContainingValue(value);
-            doc.Add(this.NameInDatabase, containingValue);
+            doc.Add(this.FieldName, containingValue);
         }
 
         void IPropertyPredicateOperator.PutInPredicate(QueryDocument doc, IEnumerable<object> collection)
         {
-            var name = this.NameInDatabase;
+            var name = this.FieldName;
             if (doc.Contains(name))
             {
                 throw new InvalidOperationException(
@@ -346,7 +368,7 @@ namespace EasyMongo
 
         void IPropertyPredicateOperator.PutRegexMatchPredicate(QueryDocument doc, string expression, string options)
         {
-            var name = this.NameInDatabase;
+            var name = this.FieldName;
             if (doc.Contains(name))
             {
                 throw new InvalidOperationException(
