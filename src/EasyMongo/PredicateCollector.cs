@@ -18,12 +18,6 @@ namespace EasyMongo
             return this.m_predicates;
         }
 
-        private static Expression EvaluateContants(Expression predicate)
-        {
-            var evaluator = new PartialEvaluator();
-            return evaluator.Eval(predicate);
-        }
-
         protected override Expression VisitMethodCall(MethodCallExpression m)
         {
             switch (m.Method.Name)

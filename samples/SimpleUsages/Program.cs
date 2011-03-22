@@ -33,7 +33,12 @@ namespace SimpleUsages
             };
             // collection.InsertOnSubmit(note);
             // collection.SubmitChanges();
-            var data = collection.SelectTo(n => new { ID = n.NoteID, UserID = n.UserID });
+            // var data = collection.SelectTo(n => new { n.NoteID, n.UserID });
+            collection.Log = Console.Out;
+            var a = 4;
+            collection.Update(
+                n => new Note { },
+                n => true);
         }
 
         static void Main(string[] args)

@@ -111,7 +111,9 @@ namespace EasyMongo
             var predicateDoc = mapper.GetPredicate(predicate.Body);
             var collection = mapper.GetCollection(this.Database);
 
-            collection.Update(predicateDoc, updateDoc);
+            this.Log.WriteUpdate(collection, predicateDoc, updateDoc);
+
+            collection.Update(predicateDoc, updateDoc, UpdateFlags.Multi);
         }
 
         public void UpdateVersion(Expression<Func<TEntity, bool>> predicate)
