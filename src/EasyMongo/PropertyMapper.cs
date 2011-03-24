@@ -198,31 +198,6 @@ namespace EasyMongo
             doc.Add(this.FieldName, desc ? -1 : 1);
         }
 
-        public void PutDefaultVersion(BsonDocument doc)
-        {
-            BsonValue value;
-
-            var type = this.Descriptor.Property.PropertyType;
-            if (type == typeof(int))
-            { 
-                value = new BsonInt32(0);
-            }
-            else if (type == typeof(long))
-            {
-                value = new BsonInt64(0);
-            }
-            else if (type == typeof(DateTime))
-            {
-                value = new BsonDateTime(DateTime.UtcNow);
-            }
-            else
-            {
-                throw new NotSupportedException(String.Format("Don't support type {0} as version.", type));
-            }
-
-            doc.Add(this.FieldName, value);
-        }
-
         public void PutNextVersion(UpdateDocument updateDoc, object entity)
         {
             var version = this.Accessor.GetValue(entity);
@@ -235,7 +210,7 @@ namespace EasyMongo
             }
             else if (type == typeof(long))
             {
-                nextVersion = (long)version + 1;
+                nextVersion = Int64Version.GetCurrent();
             }
             else if (type == typeof(DateTime))
             {
@@ -260,11 +235,11 @@ namespace EasyMongo
             }
             else if (type == typeof(long))
             {
-                optr.PutAddUpdate(updateDoc, 1L);
+                optr.PutConstantUpdate(updateDoc, Int64Version.GetCurrent());
             }
             else if (type == typeof(DateTime))
             {
-                optr.PutAddUpdate(updateDoc, DateTime.UtcNow);
+                optr.PutConstantUpdate(updateDoc, DateTime.UtcNow);
             }
             else
             {

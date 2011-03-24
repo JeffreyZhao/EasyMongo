@@ -63,6 +63,7 @@
     <Compile Include="EntityState.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Int64Version.cs" />
     <Compile Include="IPropertyDescriptor.cs" />
     <Compile Include="IPropertyPredicate.cs" />
     <Compile Include="IPropertyPredicateOperator.cs" />

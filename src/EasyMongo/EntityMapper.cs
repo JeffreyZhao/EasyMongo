@@ -81,7 +81,6 @@ namespace EasyMongo
 
             if (this.m_version != null)
             {
-                // this.m_version.PutDefaultVersion(doc);
                 this.m_version.PutValue(doc, entity);
             }
 
