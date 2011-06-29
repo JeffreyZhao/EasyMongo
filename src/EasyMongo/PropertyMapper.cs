@@ -214,7 +214,7 @@ namespace EasyMongo
             }
             else if (type == typeof(DateTime))
             {
-                nextVersion = DateTime.UtcNow;
+                nextVersion = DateTimeVersion.GetCurrent();
             }
             else
             {
